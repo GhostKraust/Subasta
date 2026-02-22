@@ -1,0 +1,27 @@
+body {
+    font-family: "Outfit", sans-serif;
+}
+
+.nav-item {
+    position: relative;
+}
+
+.nav-item::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background-color: #ff91af;
+    transition: width 0.3s ease;
+}
+
+.nav-item:hover::after {
+    width: 100%;
+}
+
+.auction-card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+}

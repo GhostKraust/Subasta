@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Charity Auction - Pasitos de Luz / Casa Connor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="/css/subasta.css" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF91AF",
+                        secondary: "#00B4FF",
+                        "background-light": "#F8F9FA",
+                        "background-dark": "#121212",
+                    },
+                    fontFamily: {
+                        display: ["Outfit", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "12px",
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
+<div class="bg-primary text-white py-2 px-6 flex justify-between items-center text-sm font-medium">
+<div class="flex items-center gap-2">
+<span class="material-icons text-lg">phone</span>
+<span>Contáctanos: (+52 322 135 6302)</span>
+</div>
+<div class="flex items-center gap-3">
+<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
+<img alt="Phone" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxFK45cv0gaRJ0xZfuzT2Bwa3-JMqXwpo6c1aSAZEpwS6Qn3yAD_n3oxqefRhD8fu3YfdX5UbL9_UkS5-goiF3Y5xUu3m-GA0MX3LXtnKgeMAhvzdqNXJYRwRsQGI88Ntl_q-1wG_fi5MqsGLPbbG3seFXUmO4VT9oH8AWL5IP2k7Di97UQnG62KawAIzhhNPWCR2XSL3mGIacTHEQZiLOUYsSCvWowpx6qfMPL6PEuakqq0JWr9wSdDMUH68R18Z4jHplsE3Kdw"/>
+</a>
+<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
+<img alt="WhatsApp" class="w-4 h-4 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcoz0Fs0k8pbdKqr-zOgO4uyrQ5mQg45wNx5zH-kXHTJMPYw9WmKR9rskpONpsNpdZcddx8dQlcHKGR_EIh2ZZWJg-ySr67SOu_92x8aBpkeMCQ_NacvCuW8FaesN9jxpqCm2KL3CHFnRJv79X4ZyODEug3J0JvjT2iiXBPJ5SxfHe9ONmggul-vlvu-vr8PNWSwTSC5KztbOgbWqE6p8u9AbtXjI8bh99Ffa0o73MPKfHXqnRPh_7mVFxHSP1tm75JmoZ-0vUmQ"/>
+</a>
+<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
+<span class="material-icons text-base">location_on</span>
+</a>
+<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
+<span class="material-icons text-base">facebook</span>
+</a>
+<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
+<img alt="Instagram" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNKJ4nyRBz5Y6Od4tNvjINNEYQvla18pf7WhlWdXeX2n2kIAcS_cVIWgLTypG7jJqXjBWK45Gzs0jSX-TGlh2uklBVZNCNIGAESIxvDliJ4dLh40bjaLQ6P5hSCAm5eyqd1gBGL-WoThj0XDtIJpsfxbEo5ND4CEbbJdJETOW5sw1nM0P6HQ8OY6qzprzan9b8P_2urNcc1utB3zNz2Pa-EW5HPC3TQDFLmSr6sN0eva7XY4H0yIXsrx9dV3zoTTfK3tft53jObA"/>
+</a>
+<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
+<span class="material-icons text-base">play_circle_filled</span>
+</a>
+</div>
+</div>
+<header class="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-50">
+<div class="container mx-auto px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<img alt="Pasitos de Luz Logo" class="h-16" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJBgXL6W54AfQQBLrEdcbUPl23gcyBOIkv6x7ZaxvFtMPkqIpiS6C2ZwR3ibXnMl5AR6fWT5-HX3hTc3CIRXT6ABbcQK2jXn2l1EW9gcNuG2eGieN2PCY45FSbADypP9YjkbeEeG42QsF-ZnNlckv76qCFlmHFUzLOk0a7wA3iTKPbNeqzPSZjeqDWl_bKYDyfgbuVjfu6-bv4bjXQsEKVOfayOwCHzrMI-5H8-XTZDkC1VDNOQAbzzR6KAOsuxpuLWdr2bmo9GQ"/>
+<img alt="Casa Connor Logo" class="h-16" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6A6G-G67IViN5Qj5YTdPhmIDLmDu0mfHPTBr5jZqgnKT6WMMj0rC4S_u4wuFtPgMAM0tTdL2rrLp1e-ZXCTp6CkI143bR24dysrIpt0_8KVzzgBs9PJZXsviv_KRB2byA5wgSJ6CUb8sG0RAfEG8BJWstiHAo1LMJ8LrQwTs9weBZNfb7h53e9BfvkIdD1nG-EBAnzbKuKN-L_onEsV8UFuRxOu_MokwgJiE4DSv-tsBjYGxpDf8HgSJl6-BxozT2kRMAFH5kvQ"/>
+</div>
+<nav class="hidden lg:flex items-center gap-8 ml-8 font-semibold text-slate-700 dark:text-slate-300">
+<a class="nav-item text-primary" href="#">Home</a>
+<div class="nav-item flex items-center gap-1 cursor-pointer">About Us <span class="material-icons text-sm">expand_more</span></div>
+<div class="nav-item flex items-center gap-1 cursor-pointer">Our Services <span class="material-icons text-sm">expand_more</span></div>
+<a class="nav-item" href="#">Meet Our Kids</a>
+<div class="nav-item flex items-center gap-1 cursor-pointer">Donate <span class="material-icons text-sm">expand_more</span></div>
+<a class="nav-item" href="#">Campaigns</a>
+<a class="nav-item" href="#">Events</a>
+<div class="flex items-center gap-1 ml-4 border rounded px-2 py-1 border-slate-200 dark:border-slate-700">
+<span class="text-lg">🇲🇽</span>
+<span class="material-icons text-sm">expand_more</span>
+</div>
+</nav>
+</div>
+<button class="bg-primary hover:bg-[#ff7ca2] text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                DONATE <span class="material-icons text-base">favorite</span>
+</button>
+</div>
+</header>
+<section class="bg-slate-50 dark:bg-slate-800/50 py-12 px-6">
+<div class="container mx-auto text-center">
+<h1 class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">Charity Auction</h1>
+<p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                Support our mission to provide therapeutic and educational services to children with disabilities. 
+                Bid on exclusive items and make a difference today.
+            </p>
+</div>
+</section>
+<div class="container mx-auto px-6 mt-8">
+<div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-4">
+<span class="font-medium text-slate-500">Filter by:</span>
+<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary">
+<option>All Categories</option>
+<option>Experiences</option>
+<option>Art &amp; Decor</option>
+<option>Jewelry</option>
+</select>
+<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary">
+<option>Price: Low to High</option>
+<option>Price: High to Low</option>
+<option>Ending Soon</option>
+</select>
+</div>
+<div class="relative w-full md:w-64">
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
+<span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
+</div>
+</div>
+</div>
+<main class="container mx-auto px-6 py-12">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+<div class="relative h-60 overflow-hidden">
+<img alt="Yoga Retreat Package" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3WLeRYa3OcOaIZVE2zDqMAbSWqE-FEqlIbNB1QZLWBK2aJmSXjYxYx6OTMpyUhrFel1sj7ZtsGKlpH21obbOSmvoy4ecp0HXlczz0mQR3oiLnHrbZPXC2PBjWug-c5ZfGlJjVNtQHLJXzipaitulsv7JIzo4TvlzPploIXL5PG-RTo-7vButfddOwQzDUvTxrTsl742QG0qT4eneN1yln8i3XMpCu_0RVGuCvLG0kQRCnZYnoO4_9avqxQcCIEBnkf8H08HAZNg"/>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                        ENDING IN 2D 4H
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Luxury Wellness Retreat for Two</h3>
+<p class="text-sm text-slate-500 mb-4 line-clamp-2">A 3-night stay at the Amaca Spa &amp; Resort including organic meals and daily yoga sessions.</p>
+<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+<div>
+<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
+<div class="text-2xl font-bold text-secondary">$1,250</div>
+</div>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            Bid Now
+                        </button>
+</div>
+</div>
+</div>
+<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+<div class="relative h-60 overflow-hidden">
+<img alt="Local Artist Painting" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVCMgxfXcOzUHWras4bTvi_ZJEazxUgw1iMKwpzy1NUZZ6r3FW7N7SglAN6O5_MNRKbOl-3Q5sjBBUE_ajcnTPLPNeQ0yxALHLL3SYXN9CT5_8l4xyylZEknUKcSo_hqTIU0p6nzWkwNalxyPtKIv_DtRWV70Ju4M5AHOYBYyYlDB7VK5nYXm57JRgqY3oH4VRqLBUri1kYi4h9XzKQIcva2CjSdJTjxFGxTs5K7PYpKWLMWknpCO3yNXMEnRznlyN1ce3AY6Ykg"/>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                        ENDING IN 5H 12M
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">"Harmony" - Original Oil on Canvas</h3>
+<p class="text-sm text-slate-500 mb-4 line-clamp-2">Exquisite local artwork donated by Maria Gonzalez. Size: 24x36 inches. Framed.</p>
+<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+<div>
+<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
+<div class="text-2xl font-bold text-secondary">$850</div>
+</div>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            Bid Now
+                        </button>
+</div>
+</div>
+</div>
+<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+<div class="relative h-60 overflow-hidden">
+<img alt="Wine Tasting Event" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqVEY_aRdzhKSaYANfR-6B-1kp9l8fSfBgZCSRIEmrxtaKyD4Sa4j6KXY08pxw68w_D9-mVLnRBkSDybWqwXKK1cF4mgQGqbtGxm7Un3vd22jtR_IVZaGmSqXgKWfZtxUwxEIHCa_c2HzNxJw_EapqPFcSeDUpnFdNf70tXSrgnfJ_Mh6S-fcP5BgTtNcdR1ndkRK-kR_4vaaFTcS_04Tmg4nwdtVYRLcMUJ_b3bfRVTzVbJlNFUI9IXfrhlaecuUfc8vi6D2zmw"/>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                        ENDING IN 1D 12H
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Private Wine Tasting for 6</h3>
+<p class="text-sm text-slate-500 mb-4 line-clamp-2">Explore 6 premium labels with an expert sommelier in the comfort of your own home.</p>
+<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+<div>
+<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
+<div class="text-2xl font-bold text-secondary">$420</div>
+</div>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            Bid Now
+                        </button>
+</div>
+</div>
+</div>
+<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+<div class="relative h-60 overflow-hidden">
+<img alt="Handmade Jewelry" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk4aj6sTALJ0ySZEZTCk5HjD3_d13AUnuMhVEufVnI-r4rl9yJfQbgTeiohT5xrJms3iKiQqDi0K8OlNqYpdvGILltZxUvcb2hrDHcr5SboKBw-yJjhZjh4uCCKIn08mFUazZkZPqq1rvsAkUaOUXaiDpOK5nsFVIf1NOEc5L1PD1A9YaFvDyANgSwuzWLL2MzXRdsm9VVFnWT9mArYHbt_EltIg8FKOnCOxcmiRMLOZ7Lj-df4HgXUEOjIjw5sx-GuvgQ1VV85A"/>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                        ENDING IN 3D 8H
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Handcrafted Sterling Silver Set</h3>
+<p class="text-sm text-slate-500 mb-4 line-clamp-2">Necklace and earrings set featuring authentic turquoise stones. One of a kind.</p>
+<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+<div>
+<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
+<div class="text-2xl font-bold text-secondary">$210</div>
+</div>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            Bid Now
+                        </button>
+</div>
+</div>
+</div>
+<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+<div class="relative h-60 overflow-hidden">
+<img alt="Hiking Excursion" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWwkfuw3PwhUh9O9lyYcoKEb0-TBFGEAMlqzOYkxcTz1p6ivHQTRDceLWntKPrpM7Emxl8c9Sb8pipx2M8dYmTMamvuh19U49hTM3sirlPFw-KEscVVJ49-j66BDrB0dxAQb1ct9aFcf9C9-4e4Q13VLLWUs8JXO5PJV1vciE26KtPHqGF7lBoRScL71ak1nZeZpZTNgLfs51YeXxzH8_35H5Du2-Ng-tr9dn72-VrSAALIlxOmSA6eOdLq0z_OowSxpHZUCi3AQ"/>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                        ENDING IN 12H 45M
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Guided Adventure Mountain Hike</h3>
+<p class="text-sm text-slate-500 mb-4 line-clamp-2">Professional guide for a group of 4. Includes equipment and gourmet picnic lunch.</p>
+<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+<div>
+<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
+<div class="text-2xl font-bold text-secondary">$350</div>
+</div>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            Bid Now
+                        </button>
+</div>
+</div>
+</div>
+<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+<div class="relative h-60 overflow-hidden">
+<img alt="Villa Stay" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjOx7vruqZJMdHpTbi6SyJTHP0vHsZOR_RMSvM5TXWI7Inmx7USUoHl1RhumnGRZJC8WC9iVBZ4fsuIF9HfMzXmY-BUrg918YgW4O4N0rUsstkl-REqOzZAEeeWirSPJyb1enBdOh6awcZF-DYKz3ZxIqylQQOSJglXS58VZFRDe3VCKbznXVOtvsvHLWvLmPL7clEZfPEC46fvfHMXnY5XENGCX2CxjFpHZt9PJ4CfhhwF2-_GyJp3BV0bt26RCcazIR7ZcDrig"/>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                        ENDING IN 6D 2H
+                    </div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Banderas Bay Villa Weekend</h3>
+<p class="text-sm text-slate-500 mb-4 line-clamp-2">A luxurious 2-night stay in a private ocean-front villa. Perfect for family or friends.</p>
+<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+<div>
+<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
+<div class="text-2xl font-bold text-secondary">$1,800</div>
+</div>
+<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            Bid Now
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-16 flex justify-center">
+<button class="flex items-center gap-2 px-8 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-full transition-all">
+                Load More Items <span class="material-icons">refresh</span>
+</button>
+</div>
+</main>
+<footer class="mt-20">
+<div class="bg-primary text-white py-16 px-6">
+<div class="container mx-auto">
+<div class="flex flex-col items-center text-center mb-12">
+<div class="flex items-center gap-4 mb-8">
+<img alt="Pasitos Logo White" class="h-24 brightness-0 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGphVm7IzCYq_5-dzIVFl_wIMzK6Yit00A9lPZfnwHS66074IjXQMyJ-REWOE0823ArKK6S6PJxtqt-2XTFo0n5VXL5J-G6GKT2P0SC3FCZqhgXjcA7GN2mHjenPQJFlpIYti7rfdtGWgvwUkC72z5f-cfBqMKzwMSJyryYnN0gaFIuPpdlmFZ0G2ANT_2Kti6_P-c3Xr2EEDBYAI2c3FYnGxayTws_Z1K3WZUtQOnXbmaZ1abQmkzOg9xVlTp0E3dIa2oU1BYKA"/>
+<img alt="Casa Connor Logo White" class="h-24 brightness-0 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMwITLdcOitGrym8xTgXWALeE4DgxR4wyXiSyZFRif-t-KS-3Z0Xzvh0ji9CnlMDbJo2uvUytx6ZOY14SchHTIFghUa5Csx00DoQqc21yT8lZwg3D8ddKODASlMvX1MrULEAOO0xtAqO_V_LjuoctNjrPlpwoKFcmry6MjQc9m_EgAo2vy-KDnNEwnFzlfR6Y0o4dy_6yGud0goPr61Ny4t4AeuMpdUPICuhacVv1BptrNL-SoSpFQMqfTHgINkD99NLEORHlJ2g"/>
+</div>
+<p class="max-w-3xl text-lg opacity-90 leading-relaxed font-light">
+                        Pasitos de Luz is a civil association in Banderas Bay. It is a registered non-profit organization founded by mothers of disabled children to meet their therapeutic, psychological, nutritional, educational and basic needs.
+                    </p>
+<div class="mt-6 text-sm opacity-80">
+                        Boulevard Federación | Nayarit, México | C.P. 63737<br/>
+                        Tel: (+52) 322 135 6302 | info@pasitosdeluz.org
+                    </div>
+</div>
+<div class="flex flex-col items-center mb-12">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-icons text-4xl">mark_as_unread</span>
+<h3 class="text-2xl font-bold tracking-tight uppercase">Join Our Newsletter</h3>
+</div>
+<div class="flex w-full max-w-md bg-white rounded-xl overflow-hidden shadow-xl">
+<input class="flex-grow px-6 py-4 text-slate-800 border-none focus:ring-0" placeholder="Enter your email" type="email"/>
+<button class="bg-slate-900 text-white px-8 font-bold uppercase text-sm hover:bg-slate-800 transition-colors">
+                            Subscribe
+                        </button>
+</div>
+<a class="mt-6 text-sm font-bold underline underline-offset-4 hover:opacity-80" href="#">PRIVACY POLICY</a>
+</div>
+<div class="flex justify-center gap-6 pb-8 border-b border-white/20">
+<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">phone</span></a>
+<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">chat</span></a>
+<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">location_on</span></a>
+<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">facebook</span></a>
+<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">camera_alt</span></a>
+<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">play_circle</span></a>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-950 py-12 px-6">
+<div class="container mx-auto">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
+<div class="space-y-3">
+<a class="block hover:text-primary transition-colors" href="#">About Us</a>
+<a class="block hover:text-primary transition-colors" href="#">Pasitos de Luz History</a>
+<a class="block hover:text-primary transition-colors" href="#">Casa Connor</a>
+</div>
+<div class="space-y-3">
+<a class="block hover:text-primary transition-colors" href="#">Board of Directors</a>
+<a class="block hover:text-primary transition-colors" href="#">Love Pasitos Monthly</a>
+<a class="block hover:text-primary transition-colors" href="#">Volunteer</a>
+</div>
+<div class="space-y-3">
+<a class="block hover:text-primary transition-colors" href="#">List of Necessities</a>
+<a class="block hover:text-primary transition-colors" href="#">Financials</a>
+<a class="block hover:text-primary transition-colors" href="#">Campaigns</a>
+</div>
+<div class="space-y-3">
+<a class="block hover:text-primary transition-colors" href="#">Events</a>
+<a class="block hover:text-primary transition-colors" href="#">News</a>
+<a class="block hover:text-primary transition-colors" href="#">Frequently Asked Questions</a>
+</div>
+</div>
+<div class="mt-12 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-slate-900 pt-8">
+                    © 2023 Pasitos de Luz / Casa Connor. All rights reserved.
+                </div>
+</div>
+</div>
+</footer>
+
+</body></html>
