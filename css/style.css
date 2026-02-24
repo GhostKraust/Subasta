@@ -462,3 +462,41 @@ h1 {
         grid-column: auto;
     }
 }
+
+@media (max-width: 1024px) {
+    .admin-layout {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        font-size: 0.85rem;
+        white-space: normal;
+    }
+
+    .thumb {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+@media (max-width: 600px) {
+    .currency-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .auth-card,
+    .auth-panel {
+        padding: 20px;
+    }
+}

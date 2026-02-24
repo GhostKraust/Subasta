@@ -120,6 +120,16 @@ if (count($productos) > 0) {
         }
     }
 }
+
+$admins = [];
+$currentAdminId = (int) ($_SESSION["admin_id"] ?? 0);
+$staffStatus = trim($_GET["staff"] ?? "");
+$resultAdmins = $mysqli->query("SELECT id, usuario FROM admin ORDER BY id DESC");
+if ($resultAdmins) {
+    while ($row = $resultAdmins->fetch_assoc()) {
+        $admins[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -144,178 +154,109 @@ if (count($productos) > 0) {
                 <?php } ?>
             </select>
         </form>
+
         <section class="auth-card admin-products">
             <h2 class="section-title">Productos existentes</h2>
             <div class="table-wrap">
                 <table class="admin-table">
-                        <thead>
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Producto</th>
+                            <th>Categoria</th>
+                            <th>Precio inicial</th>
+                            <?php if ($hasIncremento) { ?>
+                                <th>Incremento</th>
+                            <?php } ?>
+                            <th>Estado</th>
+                            <th>Ganador</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (count($productos) === 0) { ?>
                             <tr>
-                                <th>Imagen</th>
-                                <th>Producto</th>
-                                <th>Categoria</th>
-                                <th>Precio inicial</th>
-                                <?php if ($hasIncremento) { ?>
-                                    <th>Incremento</th>
-                                <?php } ?>
-                                <th>Estado</th>
-                                <th>Ganador</th>
-                                <th>Acciones</th>
+                                <td colspan="<?php echo $hasIncremento ? 8 : 7; ?>">No hay productos registrados.</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (count($productos) === 0) { ?>
+                        <?php } else { ?>
+                            <?php foreach ($productos as $producto) { ?>
+                                <?php
+                                    $img = $producto["imagen_url"] ?? "";
+                                    if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
+                                        $img = "../" . $img;
+                                    }
+                                ?>
                                 <tr>
-                                    <td colspan="<?php echo $hasIncremento ? 8 : 7; ?>">No hay productos registrados.</td>
-                                </tr>
-                            <?php } else { ?>
-                                <?php foreach ($productos as $producto) { ?>
-                                    <?php
-                                        $img = $producto["imagen_url"] ?? "";
-                                        if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
-                                            $img = "../" . $img;
-                                        }
-                                    ?>
-                                    <tr>
-                                        <td>
-                                            <?php if ($img !== "") { ?>
-                                                <img class="thumb" src="<?php echo htmlspecialchars($img); ?>" alt="" />
+                                    <td>
+                                        <?php if ($img !== "") { ?>
+                                            <img class="thumb" src="<?php echo htmlspecialchars($img); ?>" alt="" />
+                                        <?php } ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($producto["nombre"] ?? ""); ?></td>
+                                    <td><?php echo htmlspecialchars($producto["categoria"] ?? "Sin categoria"); ?></td>
+                                    <td>
+                                        <div class="currency-stack">
+                                            <?php foreach ($monedas as $code) { ?>
+                                                <div class="currency-line">
+                                                    <?php echo htmlspecialchars($code . " " . formatCurrency((float) $producto["precio"], $code, $rates)); ?>
+                                                </div>
                                             <?php } ?>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($producto["nombre"] ?? ""); ?></td>
-                                        <td><?php echo htmlspecialchars($producto["categoria"] ?? "Sin categoria"); ?></td>
+                                        </div>
+                                    </td>
+                                    <?php if ($hasIncremento) { ?>
                                         <td>
                                             <div class="currency-stack">
                                                 <?php foreach ($monedas as $code) { ?>
                                                     <div class="currency-line">
-                                                        <?php echo htmlspecialchars($code . " " . formatCurrency((float) $producto["precio"], $code, $rates)); ?>
+                                                        <?php echo htmlspecialchars($code . " " . formatCurrency((float) ($producto["incremento_minimo"] ?? 0), $code, $rates)); ?>
                                                     </div>
                                                 <?php } ?>
                                             </div>
                                         </td>
-                                        <?php if ($hasIncremento) { ?>
-                                            <td>
-                                                <div class="currency-stack">
-                                                    <?php foreach ($monedas as $code) { ?>
-                                                        <div class="currency-line">
-                                                            <?php echo htmlspecialchars($code . " " . formatCurrency((float) ($producto["incremento_minimo"] ?? 0), $code, $rates)); ?>
+                                    <?php } ?>
+                                    <td><span class="status-tag"><?php echo htmlspecialchars($producto["estado"] ?? ""); ?></span></td>
+                                    <td>
+                                        <?php if (($producto["estado"] ?? "") === "finalizado") { ?>
+                                            <?php $ganador = $ganadores[(int) $producto["id"]] ?? null; ?>
+                                            <?php if ($ganador) { ?>
+                                                <div class="winner">
+                                                    <div class="winner-name"><?php echo htmlspecialchars($ganador["nombre_usuario"] ?? ""); ?></div>
+                                                    <div class="winner-meta"><?php echo htmlspecialchars($ganador["correo_usuario"] ?? ""); ?></div>
+                                                    <div class="winner-meta"><?php echo htmlspecialchars($ganador["telefono_usuario"] ?? ""); ?></div>
+                                                    <div class="winner-amount">
+                                                        <div class="currency-stack">
+                                                            <?php foreach ($monedas as $code) { ?>
+                                                                <div class="currency-line">
+                                                                    <?php echo htmlspecialchars($code . " " . formatCurrency((float) ($ganador["monto_puja"] ?? 0), $code, $rates)); ?>
+                                                                </div>
+                                                            <?php } ?>
                                                         </div>
-                                                    <?php } ?>
+                                                    </div>
                                                 </div>
-                                            </td>
-                                        <?php } ?>
-                                        <td><span class="status-tag"><?php echo htmlspecialchars($producto["estado"] ?? ""); ?></span></td>
-                                        <td>
-                                            <?php if (($producto["estado"] ?? "") === "finalizado") { ?>
-                                                <?php $ganador = $ganadores[(int) $producto["id"]] ?? null; ?>
-                                                <?php if ($ganador) { ?>
-                                                    <div class="winner">
-                                                        <div class="winner-name"><?php echo htmlspecialchars($ganador["nombre_usuario"] ?? ""); ?></div>
-                                                        <div class="winner-meta"><?php echo htmlspecialchars($ganador["correo_usuario"] ?? ""); ?></div>
-                                                        <div class="winner-meta"><?php echo htmlspecialchars($ganador["telefono_usuario"] ?? ""); ?></div>
-                                                        <div class="winner-amount">
-                                                            <div class="currency-stack">
-                                                                <?php foreach ($monedas as $code) { ?>
-                                                                    <div class="currency-line">
-                                                                        <?php echo htmlspecialchars($code . " " . formatCurrency((float) ($ganador["monto_puja"] ?? 0), $code, $rates)); ?>
-                                                                    </div>
-                                                                <?php } ?>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                <?php } else { ?>
-                                                    <span class="text-xs text-slate-400">Sin pujas</span>
-                                                <?php } ?>
                                             <?php } else { ?>
-                                                <span class="text-xs text-slate-400">-</span>
+                                                <span class="text-xs text-slate-400">Sin pujas</span>
                                             <?php } ?>
-                                        </td>
-                                        <td>
-                                            <div class="action-row">
-                                                <a class="btn btn-small btn-outline" href="editar_producto.php?id=<?php echo (int) $producto["id"]; ?>">Editar</a>
-                                                <form action="eliminar_producto.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este producto?');">
-                                                    <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
-                                                    <button class="btn btn-small" type="submit">Eliminar</button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php } ?>
+                                        <?php } else { ?>
+                                            <span class="text-xs text-slate-400">-</span>
+                                        <?php } ?>
+                                    </td>
+                                    <td>
+                                        <div class="action-row">
+                                            <a class="btn btn-small btn-outline" href="editar_producto.php?id=<?php echo (int) $producto["id"]; ?>">Editar</a>
+                                            <form action="eliminar_producto.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este producto?');">
+                                                <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
+                                                <button class="btn btn-small" type="submit">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
                             <?php } ?>
-                        </tbody>
-                    </table>
-                </div>
-        </section>
-        <section class="auth-card admin-new">
-                <div class="auth-brand">
-                    <div class="brand-mark">A</div>
-                    <div>
-                        <div class="brand-name">Administracion</div>
-                        <div class="brand-tag">Agregar producto</div>
-                    </div>
-                </div>
-                <h1>Nuevo producto</h1>
-                <?php if (!empty($_GET["ok"])) { ?>
-                    <p class="lead">Producto guardado correctamente.</p>
-                <?php } elseif (!empty($_GET["deleted"])) { ?>
-                    <p class="lead">Producto eliminado correctamente.</p>
-                <?php } elseif (!empty($_GET["updated"])) { ?>
-                    <p class="lead">Producto actualizado correctamente.</p>
-                <?php } elseif (!empty($_GET["presencial"])) { ?>
-                    <p class="lead">Puja presencial registrada correctamente.</p>
-                <?php } else { ?>
-                    <p class="lead">Completa los datos para publicar una nueva subasta.</p>
-                <?php } ?>
-                <form class="auth-form" action="guardar_producto.php" method="post" enctype="multipart/form-data">
-                    <label class="field">
-                        <span>Nombre del producto</span>
-                        <input name="nombre" type="text" required placeholder="Ej. Paquete de viaje" />
-                    </label>
-                    <label class="field">
-                        <span>Descripcion</span>
-                        <input name="descripcion" type="text" required placeholder="Breve descripcion" />
-                    </label>
-                    <label class="field">
-                        <span>Imagen del producto</span>
-                        <input name="imagen" type="file" accept="image/*" required />
-                        <small class="field-hint">Se subira al servidor y se guardara en la base de datos.</small>
-                    </label>
-                    <label class="field">
-                        <span>Precio inicial</span>
-                        <input name="precio_inicial" type="number" min="0" step="0.01" required placeholder="800" />
-                    </label>
-                    <label class="field">
-                        <span>Incremento minimo</span>
-                        <input name="incremento_minimo" type="number" min="1" step="1" required placeholder="100" />
-                        <?php if (!$hasIncremento) { ?>
-                            <small class="field-hint">Agrega la columna incremento_minimo en la tabla productos.</small>
                         <?php } ?>
-                    </label>
-                    <?php if ($hasInicio) { ?>
-                        <label class="field">
-                            <span>Fecha y hora de inicio</span>
-                            <input name="fecha_inicio" type="datetime-local" required />
-                        </label>
-                    <?php } ?>
-                    <?php if ($hasFin) { ?>
-                        <label class="field">
-                            <span>Fecha y hora de fin</span>
-                            <input name="fecha_fin" type="datetime-local" required />
-                        </label>
-                    <?php } ?>
-                    <label class="field">
-                        <span>Categoria</span>
-                        <select name="categoria_id" required>
-                            <option value="" disabled selected>Selecciona una categoria</option>
-                            <?php foreach ($categorias as $categoria) { ?>
-                                <option value="<?php echo (int) $categoria["id"]; ?>">
-                                    <?php echo htmlspecialchars($categoria["nombre"]); ?>
-                                </option>
-                            <?php } ?>
-                        </select>
-                    </label>
-                    <button class="btn" type="submit">Guardar producto</button>
-                </form>
+                    </tbody>
+                </table>
+            </div>
         </section>
+
         <section class="auth-card admin-presencial">
             <h2 class="section-title">Registrar puja presencial</h2>
             <form class="auth-form" action="puja_presencial.php" method="post">
@@ -372,11 +313,148 @@ if (count($productos) > 0) {
                 <button class="btn" type="submit">Registrar puja presencial</button>
             </form>
         </section>
-        <div class="switch admin-switch">
-            <a class="link" href="dashboard.php">Ir al dashboard</a>
-            <span>·</span>
-            <a class="link" href="subasta.php">Volver a subasta</a>
-        </div>
+
+        <section class="auth-card admin-staff">
+            <h2 class="section-title">Personal administrativo</h2>
+            <?php if ($staffStatus === "created") { ?>
+                <p class="lead">Personal agregado correctamente.</p>
+            <?php } elseif ($staffStatus === "updated") { ?>
+                <p class="lead">Personal actualizado correctamente.</p>
+            <?php } elseif ($staffStatus === "deleted") { ?>
+                <p class="lead">Personal eliminado correctamente.</p>
+            <?php } elseif ($staffStatus === "exists") { ?>
+                <p class="lead">Ese usuario ya existe. Usa otro nombre.</p>
+            <?php } elseif ($staffStatus === "self") { ?>
+                <p class="lead">No puedes eliminar tu propio acceso.</p>
+            <?php } elseif ($staffStatus === "error") { ?>
+                <p class="lead">No se pudo completar la accion. Intenta de nuevo.</p>
+            <?php } else { ?>
+                <p class="lead">Agrega, edita o elimina usuarios con acceso al panel.</p>
+            <?php } ?>
+            <form class="auth-form" action="guardar_personal.php" method="post">
+                <label class="field">
+                    <span>Usuario</span>
+                    <input name="usuario" type="text" required placeholder="Ej. admin2" />
+                </label>
+                <label class="field">
+                    <span>Contrasena</span>
+                    <input name="contrasena" type="password" required placeholder="********" />
+                </label>
+                <button class="btn" type="submit">Agregar personal</button>
+            </form>
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (count($admins) === 0) { ?>
+                            <tr>
+                                <td colspan="2">No hay personal registrado.</td>
+                            </tr>
+                        <?php } else { ?>
+                            <?php foreach ($admins as $admin) { ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($admin["usuario"] ?? ""); ?></td>
+                                    <td>
+                                        <div class="action-row">
+                                            <a class="btn btn-small btn-outline" href="editar_personal.php?id=<?php echo (int) $admin["id"]; ?>">Editar</a>
+                                            <form action="eliminar_personal.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este usuario?');">
+                                                <input type="hidden" name="id" value="<?php echo (int) $admin["id"]; ?>" />
+                                                <button class="btn btn-small" type="submit" <?php echo ((int) $admin["id"]) === $currentAdminId ? "disabled" : ""; ?>>Eliminar</button>
+                                            </form>
+                                            <?php if ((int) $admin["id"] === $currentAdminId) { ?>
+                                                <span class="field-hint">No puedes eliminar tu usuario.</span>
+                                            <?php } ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="auth-card admin-new">
+            <div class="auth-brand">
+                <div class="brand-mark">A</div>
+                <div>
+                    <div class="brand-name">Administracion</div>
+                    <div class="brand-tag">Agregar producto</div>
+                </div>
+            </div>
+            <h1>Nuevo producto</h1>
+            <?php if (!empty($_GET["ok"])) { ?>
+                <p class="lead">Producto guardado correctamente.</p>
+            <?php } elseif (!empty($_GET["deleted"])) { ?>
+                <p class="lead">Producto eliminado correctamente.</p>
+            <?php } elseif (!empty($_GET["updated"])) { ?>
+                <p class="lead">Producto actualizado correctamente.</p>
+            <?php } elseif (!empty($_GET["presencial"])) { ?>
+                <p class="lead">Puja presencial registrada correctamente.</p>
+            <?php } else { ?>
+                <p class="lead">Completa los datos para publicar una nueva subasta.</p>
+            <?php } ?>
+            <form class="auth-form" action="guardar_producto.php" method="post" enctype="multipart/form-data">
+                <label class="field">
+                    <span>Nombre del producto</span>
+                    <input name="nombre" type="text" required placeholder="Ej. Paquete de viaje" />
+                </label>
+                <label class="field">
+                    <span>Descripcion</span>
+                    <input name="descripcion" type="text" required placeholder="Breve descripcion" />
+                </label>
+                <label class="field">
+                    <span>Imagen del producto</span>
+                    <input name="imagen" type="file" accept="image/*" required />
+                    <small class="field-hint">Se subira al servidor y se guardara en la base de datos.</small>
+                </label>
+                <label class="field">
+                    <span>Precio inicial</span>
+                    <input name="precio_inicial" type="number" min="0" step="0.01" required placeholder="800" />
+                </label>
+                <label class="field">
+                    <span>Incremento minimo</span>
+                    <input name="incremento_minimo" type="number" min="1" step="1" required placeholder="100" />
+                    <?php if (!$hasIncremento) { ?>
+                        <small class="field-hint">Agrega la columna incremento_minimo en la tabla productos.</small>
+                    <?php } ?>
+                </label>
+                <?php if ($hasInicio) { ?>
+                    <label class="field">
+                        <span>Fecha y hora de inicio</span>
+                        <input name="fecha_inicio" type="datetime-local" required />
+                    </label>
+                <?php } ?>
+                <?php if ($hasFin) { ?>
+                    <label class="field">
+                        <span>Fecha y hora de fin</span>
+                        <input name="fecha_fin" type="datetime-local" required />
+                    </label>
+                <?php } ?>
+                <label class="field">
+                    <span>Categoria</span>
+                    <select name="categoria_id" required>
+                        <option value="" disabled selected>Selecciona una categoria</option>
+                        <?php foreach ($categorias as $categoria) { ?>
+                            <option value="<?php echo (int) $categoria["id"]; ?>">
+                                <?php echo htmlspecialchars($categoria["nombre"]); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                </label>
+                <button class="btn" type="submit">Guardar producto</button>
+            </form>
+            <div class="switch">
+                <a class="link" href="dashboard.php">Ir al dashboard</a>
+                <span>·</span>
+                <a class="link" href="subasta.php">Volver a subasta</a>
+            </div>
+        </section>
     </main>
     <script>
         (function () {
