@@ -14,6 +14,8 @@ $precioInicial = (float) ($_POST["precio_inicial"] ?? 0);
 $incrementoMinimo = (float) ($_POST["incremento_minimo"] ?? 0);
 $categoriaId = (int) ($_POST["categoria_id"] ?? 0);
 $estado = trim($_POST["estado"] ?? "activo");
+$fechaInicioRaw = trim($_POST["fecha_inicio"] ?? "");
+$fechaFinRaw = trim($_POST["fecha_fin"] ?? "");
 
 if ($id <= 0 || $nombre === "" || $descripcion === "" || $precioInicial <= 0 || $categoriaId <= 0) {
     http_response_code(400);
@@ -51,6 +53,49 @@ $hasIncremento = false;
 $checkInc = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'incremento_minimo'");
 if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
+}
+
+if (!$hasIncremento) {
+    http_response_code(400);
+    exit("Falta la columna incremento_minimo en productos.");
+}
+
+$hasInicio = false;
+$checkInicio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_inicio'");
+if ($checkInicio && $checkInicio->num_rows > 0) {
+    $hasInicio = true;
+}
+
+$hasFin = false;
+$checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
+if ($checkFin && $checkFin->num_rows > 0) {
+    $hasFin = true;
+}
+
+$fechaInicio = $hasInicio ? str_replace("T", " ", $fechaInicioRaw) : null;
+$fechaFin = $hasFin ? str_replace("T", " ", $fechaFinRaw) : null;
+
+if ($hasInicio && $fechaInicioRaw === "") {
+    http_response_code(400);
+    exit("Falta fecha de inicio.");
+}
+
+if ($hasFin && $fechaFinRaw === "") {
+    http_response_code(400);
+    exit("Falta fecha de fin.");
+}
+
+if ($hasInicio && $hasFin) {
+    $inicioDt = DateTime::createFromFormat("Y-m-d H:i", $fechaInicio);
+    $finDt = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
+    if (!$inicioDt || !$finDt) {
+        http_response_code(400);
+        exit("Formato de fecha no valido.");
+    }
+    if ($inicioDt >= $finDt) {
+        http_response_code(400);
+        exit("La fecha y hora de fin debe ser posterior a la de inicio.");
+    }
 }
 
 $imagenUrl = null;
@@ -109,25 +154,69 @@ if ($stmtImg) {
     }
 }
 
-if ($hasIncremento) {
+if ($hasIncremento || $hasInicio || $hasFin) {
     if ($imagenUrl !== null) {
         $stmt = $mysqli->prepare(
-            "UPDATE productos SET nombre = ?, descripcion = ?, imagen_url = ?, $precioColumn = ?, incremento_minimo = ?, categoria_id = ?, estado = ? WHERE id = ?"
+            "UPDATE productos SET nombre = ?, descripcion = ?, imagen_url = ?, $precioColumn = ?" .
+            ($hasIncremento ? ", incremento_minimo = ?" : "") .
+            ($hasInicio ? ", fecha_inicio = ?" : "") .
+            ($hasFin ? ", fecha_fin = ?" : "") .
+            ", categoria_id = ?, estado = ? WHERE id = ?"
         );
         if (!$stmt) {
             http_response_code(500);
             exit("No se pudo preparar la actualizacion.");
         }
-        $stmt->bind_param("sssddisi", $nombre, $descripcion, $imagenUrl, $precioInicial, $incrementoMinimo, $categoriaId, $estado, $id);
+        $types = "sssd";
+        $params = [$nombre, $descripcion, $imagenUrl, $precioInicial];
+        if ($hasIncremento) {
+            $types .= "d";
+            $params[] = $incrementoMinimo;
+        }
+        if ($hasInicio) {
+            $types .= "s";
+            $params[] = $fechaInicio;
+        }
+        if ($hasFin) {
+            $types .= "s";
+            $params[] = $fechaFin;
+        }
+        $types .= "isi";
+        $params[] = $categoriaId;
+        $params[] = $estado;
+        $params[] = $id;
+        $stmt->bind_param($types, ...$params);
     } else {
         $stmt = $mysqli->prepare(
-            "UPDATE productos SET nombre = ?, descripcion = ?, $precioColumn = ?, incremento_minimo = ?, categoria_id = ?, estado = ? WHERE id = ?"
+            "UPDATE productos SET nombre = ?, descripcion = ?, $precioColumn = ?" .
+            ($hasIncremento ? ", incremento_minimo = ?" : "") .
+            ($hasInicio ? ", fecha_inicio = ?" : "") .
+            ($hasFin ? ", fecha_fin = ?" : "") .
+            ", categoria_id = ?, estado = ? WHERE id = ?"
         );
         if (!$stmt) {
             http_response_code(500);
             exit("No se pudo preparar la actualizacion.");
         }
-        $stmt->bind_param("sddisi", $nombre, $descripcion, $precioInicial, $incrementoMinimo, $categoriaId, $estado, $id);
+        $types = "ssd";
+        $params = [$nombre, $descripcion, $precioInicial];
+        if ($hasIncremento) {
+            $types .= "d";
+            $params[] = $incrementoMinimo;
+        }
+        if ($hasInicio) {
+            $types .= "s";
+            $params[] = $fechaInicio;
+        }
+        if ($hasFin) {
+            $types .= "s";
+            $params[] = $fechaFin;
+        }
+        $types .= "isi";
+        $params[] = $categoriaId;
+        $params[] = $estado;
+        $params[] = $id;
+        $stmt->bind_param($types, ...$params);
     }
 } else {
     if ($imagenUrl !== null) {

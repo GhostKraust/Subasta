@@ -12,6 +12,8 @@ $descripcion = trim($_POST["descripcion"] ?? "");
 $precioInicial = (float) ($_POST["precio_inicial"] ?? 0);
 $incrementoMinimo = (float) ($_POST["incremento_minimo"] ?? 0);
 $categoriaId = (int) ($_POST["categoria_id"] ?? 0);
+$fechaInicioRaw = trim($_POST["fecha_inicio"] ?? "");
+$fechaFinRaw = trim($_POST["fecha_fin"] ?? "");
 
 if ($nombre === "" || $descripcion === "" || $precioInicial <= 0 || $categoriaId <= 0) {
     http_response_code(400);
@@ -90,15 +92,85 @@ if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
 }
 
-if ($hasIncremento) {
-    $stmt = $mysqli->prepare(
-        "INSERT INTO productos (nombre, descripcion, imagen_url, $precioColumn, incremento_minimo, categoria_id, estado) VALUES (?, ?, ?, ?, ?, ?, 'activo')"
-    );
+if (!$hasIncremento) {
+    http_response_code(400);
+    exit("Falta la columna incremento_minimo en productos.");
+}
+
+$hasInicio = false;
+$checkInicio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_inicio'");
+if ($checkInicio && $checkInicio->num_rows > 0) {
+    $hasInicio = true;
+}
+
+$hasFin = false;
+$checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
+if ($checkFin && $checkFin->num_rows > 0) {
+    $hasFin = true;
+}
+
+$fechaInicio = $hasInicio ? str_replace("T", " ", $fechaInicioRaw) : null;
+$fechaFin = $hasFin ? str_replace("T", " ", $fechaFinRaw) : null;
+
+if ($hasInicio && $fechaInicioRaw === "") {
+    http_response_code(400);
+    exit("Falta fecha de inicio.");
+}
+
+if ($hasFin && $fechaFinRaw === "") {
+    http_response_code(400);
+    exit("Falta fecha de fin.");
+}
+
+if ($hasInicio && $hasFin) {
+    $inicioDt = DateTime::createFromFormat("Y-m-d H:i", $fechaInicio);
+    $finDt = DateTime::createFromFormat("Y-m-d H:i", $fechaFin);
+    if (!$inicioDt || !$finDt) {
+        http_response_code(400);
+        exit("Formato de fecha no valido.");
+    }
+    if ($inicioDt >= $finDt) {
+        http_response_code(400);
+        exit("La fecha y hora de fin debe ser posterior a la de inicio.");
+    }
+}
+
+if ($hasIncremento || $hasInicio || $hasFin) {
+    $columns = "nombre, descripcion, imagen_url, $precioColumn";
+    $values = "?, ?, ?, ?";
+    $types = "sssd";
+    $params = [$nombre, $descripcion, $imagenUrl, $precioInicial];
+
+    if ($hasIncremento) {
+        $columns .= ", incremento_minimo";
+        $values .= ", ?";
+        $types .= "d";
+        $params[] = $incrementoMinimo;
+    }
+    if ($hasInicio) {
+        $columns .= ", fecha_inicio";
+        $values .= ", ?";
+        $types .= "s";
+        $params[] = $fechaInicio;
+    }
+    if ($hasFin) {
+        $columns .= ", fecha_fin";
+        $values .= ", ?";
+        $types .= "s";
+        $params[] = $fechaFin;
+    }
+
+    $columns .= ", categoria_id, estado";
+    $values .= ", ?, 'activo'";
+    $types .= "i";
+    $params[] = $categoriaId;
+
+    $stmt = $mysqli->prepare("INSERT INTO productos ($columns) VALUES ($values)");
     if (!$stmt) {
         http_response_code(500);
         exit("No se pudo preparar el guardado.");
     }
-    $stmt->bind_param("sssddi", $nombre, $descripcion, $imagenUrl, $precioInicial, $incrementoMinimo, $categoriaId);
+    $stmt->bind_param($types, ...$params);
 } else {
     $stmt = $mysqli->prepare(
         "INSERT INTO productos (nombre, descripcion, imagen_url, $precioColumn, categoria_id, estado) VALUES (?, ?, ?, ?, ?, 'activo')"

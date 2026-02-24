@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/auth.php";
 require_once __DIR__ . "/../config/db.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -7,16 +8,32 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 $productoId = (int) ($_POST["producto_id"] ?? 0);
-$nombre = trim($_POST["nombre_usuario"] ?? "");
-$correo = trim($_POST["correo_usuario"] ?? "");
-$telefono = trim($_POST["telefono_usuario"] ?? "");
-$monto = (float) ($_POST["monto_puja"] ?? 0);
-$categoriaFiltro = (int) ($_POST["categoria"] ?? 0);
+$montoMoneda = (float) ($_POST["monto_puja"] ?? 0);
+$moneda = strtoupper($_POST["moneda"] ?? "MXN");
+if (!in_array($moneda, ["MXN", "USD", "CAD"], true)) {
+    $moneda = "MXN";
+}
 
-if ($productoId <= 0 || $nombre === "" || $correo === "" || $telefono === "" || $monto <= 0) {
-    header("Location: producto.php?id=" . $productoId . "&status=error");
+$redirectQuery = $moneda !== "MXN" ? "?moneda=" . urlencode($moneda) : "";
+
+if ($productoId <= 0 || $montoMoneda <= 0) {
+    header("Location: panel.php" . $redirectQuery);
     exit;
 }
+
+$rates = ["MXN" => 1.0, "USD" => 1.0, "CAD" => 1.0];
+$ratesResult = $mysqli->query("SELECT moneda, tasa FROM exchange_rates");
+if ($ratesResult) {
+    while ($row = $ratesResult->fetch_assoc()) {
+        $code = strtoupper($row["moneda"] ?? "");
+        if (isset($rates[$code])) {
+            $rates[$code] = (float) $row["tasa"];
+        }
+    }
+}
+
+$rate = $rates[$moneda] ?? 1.0;
+$monto = $moneda === "MXN" || $rate <= 0 ? $montoMoneda : $montoMoneda * $rate;
 
 $precioColumn = "predcio_inicial";
 $checkPrecio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'predcio_inicial'");
@@ -33,12 +50,6 @@ if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
 }
 
-$hasOrigen = false;
-$checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
-if ($checkOrigen && $checkOrigen->num_rows > 0) {
-    $hasOrigen = true;
-}
-
 $hasInicio = false;
 $checkInicio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_inicio'");
 if ($checkInicio && $checkInicio->num_rows > 0) {
@@ -49,6 +60,12 @@ $hasFin = false;
 $checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
 if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
+}
+
+$hasOrigen = false;
+$checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
+if ($checkOrigen && $checkOrigen->num_rows > 0) {
+    $hasOrigen = true;
 }
 
 $producto = null;
@@ -65,7 +82,7 @@ if ($stmtProducto) {
 }
 
 if (!$producto || ($producto["estado"] ?? "") !== "activo") {
-    header("Location: producto.php?id=" . $productoId . "&status=error");
+    header("Location: panel.php" . $redirectQuery);
     exit;
 }
 
@@ -74,7 +91,7 @@ $fin = $hasFin && !empty($producto["fecha_fin"]) ? new DateTime($producto["fecha
 $ahora = new DateTime();
 $activoTiempo = ($inicio === null || $ahora >= $inicio) && ($fin === null || $ahora <= $fin);
 if (!$activoTiempo) {
-    header("Location: producto.php?id=" . $productoId . "&status=error");
+    header("Location: panel.php" . $redirectQuery);
     exit;
 }
 
@@ -100,30 +117,30 @@ $incremento = $hasIncremento ? (float) ($producto["incremento_minimo"] ?? 0) : 0
 $minimo = $precioActual + $incremento;
 
 if ($monto < $minimo) {
-    header("Location: producto.php?id=" . $productoId . "&status=error");
+    header("Location: panel.php" . $redirectQuery);
     exit;
 }
 
+$nombre = "Presencial";
+$correo = "presencial@local";
+$telefono = "0000000000";
+
 $stmtInsert = $hasOrigen
-    ? $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja, origen) VALUES (?, ?, ?, ?, ?, NOW(), 'online')")
+    ? $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja, origen) VALUES (?, ?, ?, ?, ?, NOW(), 'presencial')")
     : $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja) VALUES (?, ?, ?, ?, ?, NOW())");
+
 if (!$stmtInsert) {
-    header("Location: producto.php?id=" . $productoId . "&status=error");
+    header("Location: panel.php" . $redirectQuery);
     exit;
 }
 
 $stmtInsert->bind_param("isssd", $productoId, $nombre, $correo, $telefono, $monto);
 if (!$stmtInsert->execute()) {
     $stmtInsert->close();
-    header("Location: producto.php?id=" . $productoId . "&status=error");
+    header("Location: panel.php" . $redirectQuery);
     exit;
 }
 
 $stmtInsert->close();
-
-$redirect = "producto.php?id=" . $productoId . "&status=ok";
-if ($categoriaFiltro > 0) {
-    $redirect .= "&categoria=" . $categoriaFiltro;
-}
-header("Location: " . $redirect);
+header("Location: panel.php?presencial=1" . ($redirectQuery === "" ? "" : "&" . ltrim($redirectQuery, "?")));
 exit;

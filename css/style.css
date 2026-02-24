@@ -52,8 +52,39 @@ a {
     gap: 32px;
     padding: 48px 20px;
     align-items: center;
-    max-width: 1120px;
+    max-width: 1280px;
     margin: 0 auto;
+}
+
+.admin-layout {
+    grid-template-columns: minmax(280px, 0.8fr) minmax(360px, 1fr) minmax(320px, 0.9fr);
+    align-items: start;
+    max-width: 100%;
+    width: 100%;
+    padding-left: 56px;
+    padding-right: 56px;
+}
+
+.currency-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.currency-label {
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.currency-bar select {
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    padding: 8px 36px 8px 14px;
+    background: var(--bg-soft);
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .auth-card {
@@ -222,6 +253,16 @@ h1 {
     font-size: 0.95rem;
 }
 
+.admin-switch {
+    grid-column: 2 / 4;
+    margin-top: 4px;
+}
+
+.admin-products .table-wrap {
+    max-height: 68vh;
+    overflow-y: auto;
+}
+
 .auth-panel {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(248, 242, 231, 0.92));
     border: 1px solid var(--line);
@@ -289,6 +330,10 @@ h1 {
     vertical-align: middle;
 }
 
+.admin-table td {
+    white-space: nowrap;
+}
+
 .admin-table thead th {
     color: var(--muted);
     font-weight: 700;
@@ -333,6 +378,37 @@ h1 {
     gap: 8px;
 }
 
+.winner {
+    display: grid;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.winner-name {
+    font-weight: 700;
+}
+
+.winner-meta {
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.winner-amount {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.currency-stack {
+    display: grid;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.currency-line {
+    white-space: nowrap;
+}
+
 
 .panel-stats {
     display: grid;
@@ -374,5 +450,15 @@ h1 {
 
     .auth-panel {
         order: -1;
+    }
+
+    .admin-layout {
+        grid-template-columns: 1fr;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .admin-switch {
+        grid-column: auto;
     }
 }

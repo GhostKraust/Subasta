@@ -25,3 +25,21 @@ body {
     transform: translateY(-5px);
     transition: transform 0.3s ease;
 }
+
+.currency-stack {
+    display: grid;
+    gap: 4px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.currency-line {
+    white-space: nowrap;
+}
+
+.currency-muted {
+    margin-top: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}

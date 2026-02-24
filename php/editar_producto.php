@@ -23,9 +23,23 @@ if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
 }
 
+$hasInicio = false;
+$checkInicio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_inicio'");
+if ($checkInicio && $checkInicio->num_rows > 0) {
+    $hasInicio = true;
+}
+
+$hasFin = false;
+$checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
+if ($checkFin && $checkFin->num_rows > 0) {
+    $hasFin = true;
+}
+
 $producto = null;
 $selectIncremento = $hasIncremento ? ", incremento_minimo" : "";
-$stmt = $mysqli->prepare("SELECT id, nombre, descripcion, imagen_url, categoria_id, estado, $precioColumn AS precio$selectIncremento FROM productos WHERE id = ? LIMIT 1");
+$selectInicio = $hasInicio ? ", fecha_inicio" : "";
+$selectFin = $hasFin ? ", fecha_fin" : "";
+$stmt = $mysqli->prepare("SELECT id, nombre, descripcion, imagen_url, categoria_id, estado, $precioColumn AS precio$selectIncremento$selectInicio$selectFin FROM productos WHERE id = ? LIMIT 1");
 if ($stmt) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -101,10 +115,25 @@ if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
                     <span>Precio inicial</span>
                     <input name="precio_inicial" type="number" min="0" step="0.01" required value="<?php echo htmlspecialchars($producto["precio"] ?? 0); ?>" />
                 </label>
-                <?php if ($hasIncremento) { ?>
+                <label class="field">
+                    <span>Incremento minimo</span>
+                    <input name="incremento_minimo" type="number" min="0" step="0.01" value="<?php echo htmlspecialchars($producto["incremento_minimo"] ?? 0); ?>" />
+                    <?php if (!$hasIncremento) { ?>
+                        <small class="field-hint">Agrega la columna incremento_minimo en la tabla productos.</small>
+                    <?php } ?>
+                </label>
+                <?php if ($hasInicio) { ?>
+                    <?php $inicioValor = !empty($producto["fecha_inicio"]) ? date("Y-m-d\TH:i", strtotime($producto["fecha_inicio"])) : ""; ?>
                     <label class="field">
-                        <span>Incremento minimo</span>
-                        <input name="incremento_minimo" type="number" min="0" step="0.01" value="<?php echo htmlspecialchars($producto["incremento_minimo"] ?? 0); ?>" />
+                        <span>Fecha y hora de inicio</span>
+                        <input name="fecha_inicio" type="datetime-local" required value="<?php echo htmlspecialchars($inicioValor); ?>" />
+                    </label>
+                <?php } ?>
+                <?php if ($hasFin) { ?>
+                    <?php $finValor = !empty($producto["fecha_fin"]) ? date("Y-m-d\TH:i", strtotime($producto["fecha_fin"])) : ""; ?>
+                    <label class="field">
+                        <span>Fecha y hora de fin</span>
+                        <input name="fecha_fin" type="datetime-local" required value="<?php echo htmlspecialchars($finValor); ?>" />
                     </label>
                 <?php } ?>
                 <label class="field">

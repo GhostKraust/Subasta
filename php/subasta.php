@@ -24,12 +24,66 @@ if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
 }
 
+$hasInicio = false;
+$checkInicio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_inicio'");
+if ($checkInicio && $checkInicio->num_rows > 0) {
+    $hasInicio = true;
+}
+
+$hasFin = false;
+$checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
+if ($checkFin && $checkFin->num_rows > 0) {
+    $hasFin = true;
+}
+
+$monedas = ["MXN", "USD", "CAD"];
+$rates = ["MXN" => 1.0, "USD" => 1.0, "CAD" => 1.0];
+$ratesResult = $mysqli->query("SELECT moneda, tasa FROM exchange_rates");
+if ($ratesResult) {
+    while ($row = $ratesResult->fetch_assoc()) {
+        $code = strtoupper($row["moneda"] ?? "");
+        if (isset($rates[$code])) {
+            $rates[$code] = (float) $row["tasa"];
+        }
+    }
+}
+
+function convertAmount($amountMXN, $currency, $rates)
+{
+    $rate = $rates[$currency] ?? 1.0;
+    if ($currency === "MXN" || $rate <= 0) {
+        $value = (float) $amountMXN;
+    } else {
+        $value = (float) $amountMXN / $rate;
+    }
+
+    return round($value, 0, PHP_ROUND_HALF_UP);
+}
+
+function formatCurrency($amountMXN, $currency, $rates)
+{
+    $value = convertAmount($amountMXN, $currency, $rates);
+    $prefix = "$";
+    if ($currency === "USD") {
+        $prefix = "US$";
+    } elseif ($currency === "CAD") {
+        $prefix = "CA$";
+    }
+
+    return $prefix . number_format($value, 0);
+}
+
 $categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
 $status = trim($_GET["status"] ?? "");
 
 $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
-$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado = 'activo'";
+$selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
+$selectFin = $hasFin ? ", p.fecha_fin" : "";
+$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo','finalizado')";
+if ($hasFin) {
+    $queryProductos .= " AND (p.fecha_fin IS NULL OR p.fecha_fin >= DATE_SUB(NOW(), INTERVAL 2 DAY))";
+}
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
@@ -41,28 +95,6 @@ if ($resultProductos) {
     }
 }
 
-$pujasPorProducto = [];
-$productoIds = [];
-foreach ($productos as $producto) {
-    $productoIds[] = (int) $producto["id"];
-}
-
-if (count($productoIds) > 0) {
-    $idList = implode(",", $productoIds);
-    $queryPujas = "SELECT producto_id, nombre_usuario, monto_puja, fecha_puja FROM pujas WHERE producto_id IN ($idList) ORDER BY fecha_puja DESC";
-    $resultPujas = $mysqli->query($queryPujas);
-    if ($resultPujas) {
-        while ($row = $resultPujas->fetch_assoc()) {
-            $pid = (int) $row["producto_id"];
-            if (!isset($pujasPorProducto[$pid])) {
-                $pujasPorProducto[$pid] = [];
-            }
-            if (count($pujasPorProducto[$pid]) < 3) {
-                $pujasPorProducto[$pid][] = $row;
-            }
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="es"><head>
@@ -215,8 +247,21 @@ if (count($productoIds) > 0) {
                 $precioActual = $maxPuja;
             }
             $incremento = $hasIncremento ? (float) ($producto["incremento_minimo"] ?? 0) : 0.0;
-            $minimo = $precioActual + $incremento;
-            $pujas = $pujasPorProducto[(int) $producto["id"]] ?? [];
+            $inicio = $hasInicio && !empty($producto["fecha_inicio"]) ? new DateTime($producto["fecha_inicio"]) : null;
+            $fin = $hasFin && !empty($producto["fecha_fin"]) ? new DateTime($producto["fecha_fin"]) : null;
+            $ahora = new DateTime();
+            $activoTiempo = ($inicio === null || $ahora >= $inicio) && ($fin === null || $ahora <= $fin);
+            $estadoActual = ($producto["estado"] ?? "activo") === "activo" && $activoTiempo;
+            $statusBadge = "";
+            if (!$estadoActual) {
+                if ($fin !== null && $ahora > $fin) {
+                    $statusBadge = "Finalizado";
+                } elseif ($inicio !== null && $ahora < $inicio) {
+                    $statusBadge = "Inicia pronto";
+                } else {
+                    $statusBadge = "No disponible";
+                }
+            }
         ?>
         <div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
             <div class="relative h-60 overflow-hidden">
@@ -226,6 +271,11 @@ if (count($productoIds) > 0) {
                 <div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
                     <?php echo htmlspecialchars($producto["categoria"] ?? ""); ?>
                 </div>
+                <?php if ($statusBadge !== "") { ?>
+                    <div class="absolute top-4 left-4 bg-slate-900/80 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        <?php echo htmlspecialchars($statusBadge); ?>
+                    </div>
+                <?php } ?>
             </div>
             <div class="p-6 flex flex-col flex-grow">
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">
@@ -234,38 +284,20 @@ if (count($productoIds) > 0) {
                 <p class="text-sm text-slate-500 mb-4 line-clamp-2">
                     <?php echo htmlspecialchars($producto["descripcion"] ?? ""); ?>
                 </p>
-                <?php if (count($pujas) > 0) { ?>
-                    <div class="mb-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                        <div class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Ultimas pujas</div>
-                        <div class="mt-2 space-y-1">
-                            <?php foreach ($pujas as $puja) { ?>
-                                <div class="flex items-center justify-between">
-                                    <span class="truncate max-w-[60%]"><?php echo htmlspecialchars($puja["nombre_usuario"] ?? ""); ?></span>
-                                    <span class="font-semibold">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></span>
+                <div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Puja actual</span>
+                        <div class="currency-stack text-secondary">
+                            <?php foreach ($monedas as $code) { ?>
+                                <div class="currency-line">
+                                    <?php echo htmlspecialchars($code . " " . formatCurrency($precioActual, $code, $rates)); ?>
                                 </div>
                             <?php } ?>
                         </div>
                     </div>
-                <?php } ?>
-                <div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-                    <div>
-                        <span class="text-xs text-slate-400 uppercase font-semibold">Puja actual</span>
-                        <div class="text-2xl font-bold text-secondary">$<?php echo number_format($precioActual, 2); ?></div>
-                        <?php if ($incremento > 0) { ?>
-                            <div class="text-xs text-slate-400">Minimo: $<?php echo number_format($minimo, 2); ?></div>
-                        <?php } ?>
-                    </div>
-                    <form class="flex flex-col gap-2" action="pujar.php" method="post">
-                        <input type="hidden" name="producto_id" value="<?php echo (int) $producto["id"]; ?>" />
-                        <input type="hidden" name="categoria" value="<?php echo (int) $categoriaFiltro; ?>" />
-                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
-                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
-                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />
-                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto" type="number" />
-                        <button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" type="submit">
-                            Pujar
-                        </button>
-                    </form>
+                    <a class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" href="producto.php?id=<?php echo (int) $producto["id"]; ?>&categoria=<?php echo (int) $categoriaFiltro; ?>">
+                        <?php echo $estadoActual ? "Ver y pujar" : "Ver detalles"; ?>
+                    </a>
                 </div>
             </div>
         </div>

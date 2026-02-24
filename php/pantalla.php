@@ -16,6 +16,12 @@ if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
 }
 
+$hasOrigen = false;
+$checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
+if ($checkOrigen && $checkOrigen->num_rows > 0) {
+    $hasOrigen = true;
+}
+
 $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado = 'activo' ORDER BY p.id DESC";
@@ -27,7 +33,8 @@ if ($resultProductos) {
 }
 
 $pujas = [];
-$queryPujas = "SELECT p.nombre AS producto, pu.nombre_usuario, pu.monto_puja, pu.fecha_puja FROM pujas pu INNER JOIN productos p ON p.id = pu.producto_id WHERE p.estado = 'activo' ORDER BY pu.fecha_puja DESC LIMIT 10";
+$selectOrigen = $hasOrigen ? ", pu.origen" : "";
+$queryPujas = "SELECT p.nombre AS producto, pu.nombre_usuario, pu.monto_puja, pu.fecha_puja$selectOrigen FROM pujas pu INNER JOIN productos p ON p.id = pu.producto_id WHERE p.estado = 'activo' ORDER BY pu.fecha_puja DESC LIMIT 10";
 $resultPujas = $mysqli->query($queryPujas);
 if ($resultPujas) {
     while ($row = $resultPujas->fetch_assoc()) {
@@ -64,6 +71,9 @@ if ($resultPujas) {
                 },
             },
         };
+
+        const REFRESH_MS = 12000;
+        setInterval(() => window.location.reload(), REFRESH_MS);
     </script>
 </head>
 <body class="bg-background-light text-slate-800">
@@ -131,6 +141,9 @@ if ($resultPujas) {
                             <div>
                                 <div class="text-sm font-semibold text-slate-800"><?php echo htmlspecialchars($puja["producto"] ?? ""); ?></div>
                                 <div class="text-xs text-slate-400"><?php echo htmlspecialchars($puja["nombre_usuario"] ?? ""); ?></div>
+                                <?php if ($hasOrigen && !empty($puja["origen"])) { ?>
+                                    <div class="text-[10px] uppercase tracking-widest text-slate-400"><?php echo htmlspecialchars($puja["origen"]); ?></div>
+                                <?php } ?>
                             </div>
                             <div class="text-lg font-bold text-secondary">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></div>
                         </div>
