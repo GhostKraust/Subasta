@@ -1,0 +1,123 @@
+<?php
+require_once __DIR__ . "/auth.php";
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Administracion - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="../css/style.css" rel="stylesheet" />
+    <link href="../css/dashboard.css" rel="stylesheet" />
+</head>
+<body class="auth-page">
+    <header class="dash-header">
+        <div class="dash-title">
+            <div class="brand-mark">A</div>
+            <div>
+                <div class="brand-name">Administracion</div>
+                <div class="brand-tag">Resumen de subastas</div>
+            </div>
+        </div>
+        <div class="dash-actions">
+            <a class="btn ghost" href="panel.php">Nuevo producto</a>
+            <a class="btn" href="logout.php">Cerrar sesion</a>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <section class="dash-grid">
+            <article class="card">
+                <div class="card-title">Productos por categoria</div>
+                <div class="chart">
+                    <div class="bar-row">
+                        <span>Joyeria</span>
+                        <div class="bar-track"><div class="bar" style="width: 62%"></div></div>
+                        <strong>18</strong>
+                    </div>
+                    <div class="bar-row">
+                        <span>Hoteleria</span>
+                        <div class="bar-track"><div class="bar" style="width: 48%"></div></div>
+                        <strong>14</strong>
+                    </div>
+                    <div class="bar-row">
+                        <span>Restaurantes</span>
+                        <div class="bar-track"><div class="bar" style="width: 38%"></div></div>
+                        <strong>11</strong>
+                    </div>
+                    <div class="bar-row">
+                        <span>Artesanias</span>
+                        <div class="bar-track"><div class="bar" style="width: 70%"></div></div>
+                        <strong>21</strong>
+                    </div>
+                    <div class="bar-row">
+                        <span>Otros</span>
+                        <div class="bar-track"><div class="bar" style="width: 24%"></div></div>
+                        <strong>7</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-title">Pujas por origen</div>
+                <div class="split-bar">
+                    <div class="split online">Online 45%</div>
+                    <div class="split onsite">Presencial 55%</div>
+                </div>
+                <div class="note">Pendiente de conectar con datos reales.</div>
+            </article>
+
+            <article class="card">
+                <div class="card-title">Top productos por monto final</div>
+                <ol class="ranked">
+                    <li><span>Villa Banderas</span><strong>$18,500</strong></li>
+                    <li><span>Retiro Wellness</span><strong>$12,800</strong></li>
+                    <li><span>Arte "Harmony"</span><strong>$9,400</strong></li>
+                    <li><span>Joyeria Plata</span><strong>$6,900</strong></li>
+                </ol>
+            </article>
+        </section>
+
+        <section class="dash-grid">
+            <article class="card">
+                <div class="card-title">Estado de subastas</div>
+                <div class="pill-row">
+                    <span class="pill">Activas: 12</span>
+                    <span class="pill">Finalizadas: 9</span>
+                    <span class="pill">Borradores: 3</span>
+                </div>
+                <div class="note">Puedes editar productos antes de publicar.</div>
+            </article>
+
+            <article class="card">
+                <div class="card-title">Ultimas pujas</div>
+                <div class="table">
+                    <div class="row head">
+                        <span>Producto</span>
+                        <span>Monto</span>
+                        <span>Origen</span>
+                    </div>
+                    <div class="row">
+                        <span>Paquete Hotel</span>
+                        <span>$1,200</span>
+                        <span>Presencial</span>
+                    </div>
+                    <div class="row">
+                        <span>Collar Artesanal</span>
+                        <span>$520</span>
+                        <span>Online</span>
+                    </div>
+                    <div class="row">
+                        <span>Cena Gourmet</span>
+                        <span>$800</span>
+                        <span>Presencial</span>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+</body>
+</html>

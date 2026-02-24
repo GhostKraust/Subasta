@@ -1,3 +1,69 @@
+<?php
+require_once __DIR__ . "/../config/db.php";
+
+$precioColumn = "predcio_inicial";
+$checkPrecio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'predcio_inicial'");
+if ($checkPrecio && $checkPrecio->num_rows === 0) {
+    $checkPrecioAlt = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'precio_inicial'");
+    if ($checkPrecioAlt && $checkPrecioAlt->num_rows > 0) {
+        $precioColumn = "precio_inicial";
+    }
+}
+
+$categorias = [];
+$resultCategorias = $mysqli->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC");
+if ($resultCategorias) {
+    while ($row = $resultCategorias->fetch_assoc()) {
+        $categorias[] = $row;
+    }
+}
+
+$hasIncremento = false;
+$checkInc = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'incremento_minimo'");
+if ($checkInc && $checkInc->num_rows > 0) {
+    $hasIncremento = true;
+}
+
+$categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
+$status = trim($_GET["status"] ?? "");
+
+$productos = [];
+$selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
+$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado = 'activo'";
+if ($categoriaFiltro > 0) {
+    $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
+}
+$queryProductos .= " ORDER BY p.id DESC";
+$resultProductos = $mysqli->query($queryProductos);
+if ($resultProductos) {
+    while ($row = $resultProductos->fetch_assoc()) {
+        $productos[] = $row;
+    }
+}
+
+$pujasPorProducto = [];
+$productoIds = [];
+foreach ($productos as $producto) {
+    $productoIds[] = (int) $producto["id"];
+}
+
+if (count($productoIds) > 0) {
+    $idList = implode(",", $productoIds);
+    $queryPujas = "SELECT producto_id, nombre_usuario, monto_puja, fecha_puja FROM pujas WHERE producto_id IN ($idList) ORDER BY fecha_puja DESC";
+    $resultPujas = $mysqli->query($queryPujas);
+    if ($resultPujas) {
+        while ($row = $resultPujas->fetch_assoc()) {
+            $pid = (int) $row["producto_id"];
+            if (!isset($pujasPorProducto[$pid])) {
+                $pujasPorProducto[$pid] = [];
+            }
+            if (count($pujasPorProducto[$pid]) < 3) {
+                $pujasPorProducto[$pid][] = $row;
+            }
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"/>
@@ -6,7 +72,7 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<link href="/css/subasta.css" rel="stylesheet"/>
+<link href="../css/subasta.css" rel="stylesheet"/>
 <script>
         tailwind.config = {
             darkMode: "class",
@@ -91,16 +157,33 @@
             </p>
 </div>
 </section>
+<?php if ($status === "ok") { ?>
+<div class="container mx-auto px-6 mt-6">
+    <div class="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl px-6 py-3">
+        Tu puja fue registrada correctamente.
+    </div>
+</div>
+<?php } elseif ($status === "error") { ?>
+<div class="container mx-auto px-6 mt-6">
+    <div class="bg-rose-50 text-rose-700 border border-rose-200 rounded-2xl px-6 py-3">
+        No se pudo registrar la puja. Verifica los datos e intenta de nuevo.
+    </div>
+</div>
+<?php } ?>
 <div class="container mx-auto px-6 mt-8">
 <div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
 <div class="flex items-center gap-4">
 <span class="font-medium text-slate-500">Filter by:</span>
-<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary">
-<option>All Categories</option>
-<option>Experiences</option>
-<option>Art &amp; Decor</option>
-<option>Jewelry</option>
+<form method="get">
+<select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+<option value="0">Todas las categorias</option>
+<?php foreach ($categorias as $categoria) { ?>
+<option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
+<?php echo htmlspecialchars($categoria["nombre"]); ?>
+</option>
+<?php } ?>
 </select>
+</form>
 <select class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary">
 <option>Price: Low to High</option>
 <option>Price: High to Low</option>
@@ -115,132 +198,79 @@
 </div>
 <main class="container mx-auto px-6 py-12">
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
-<div class="relative h-60 overflow-hidden">
-<img alt="Yoga Retreat Package" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3WLeRYa3OcOaIZVE2zDqMAbSWqE-FEqlIbNB1QZLWBK2aJmSXjYxYx6OTMpyUhrFel1sj7ZtsGKlpH21obbOSmvoy4ecp0HXlczz0mQR3oiLnHrbZPXC2PBjWug-c5ZfGlJjVNtQHLJXzipaitulsv7JIzo4TvlzPploIXL5PG-RTo-7vButfddOwQzDUvTxrTsl742QG0qT4eneN1yln8i3XMpCu_0RVGuCvLG0kQRCnZYnoO4_9avqxQcCIEBnkf8H08HAZNg"/>
-<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                        ENDING IN 2D 4H
+<?php if (count($productos) === 0) { ?>
+    <div class="col-span-full bg-white dark:bg-slate-900 rounded-2xl p-6 text-center text-slate-500">
+        Aun no hay productos activos en subasta.
+    </div>
+<?php } else { ?>
+    <?php foreach ($productos as $producto) { ?>
+        <?php
+            $img = $producto["imagen_url"] ?? "";
+            if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
+                $img = "../" . $img;
+            }
+            $precioActual = (float) ($producto["precio"] ?? 0);
+            $maxPuja = (float) ($producto["max_puja"] ?? 0);
+            if ($maxPuja > $precioActual) {
+                $precioActual = $maxPuja;
+            }
+            $incremento = $hasIncremento ? (float) ($producto["incremento_minimo"] ?? 0) : 0.0;
+            $minimo = $precioActual + $incremento;
+            $pujas = $pujasPorProducto[(int) $producto["id"]] ?? [];
+        ?>
+        <div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
+            <div class="relative h-60 overflow-hidden">
+                <?php if ($img !== "") { ?>
+                    <img alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>" class="w-full h-full object-cover" src="<?php echo htmlspecialchars($img); ?>"/>
+                <?php } ?>
+                <div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
+                    <?php echo htmlspecialchars($producto["categoria"] ?? ""); ?>
+                </div>
+            </div>
+            <div class="p-6 flex flex-col flex-grow">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">
+                    <?php echo htmlspecialchars($producto["nombre"] ?? ""); ?>
+                </h3>
+                <p class="text-sm text-slate-500 mb-4 line-clamp-2">
+                    <?php echo htmlspecialchars($producto["descripcion"] ?? ""); ?>
+                </p>
+                <?php if (count($pujas) > 0) { ?>
+                    <div class="mb-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
+                        <div class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Ultimas pujas</div>
+                        <div class="mt-2 space-y-1">
+                            <?php foreach ($pujas as $puja) { ?>
+                                <div class="flex items-center justify-between">
+                                    <span class="truncate max-w-[60%]"><?php echo htmlspecialchars($puja["nombre_usuario"] ?? ""); ?></span>
+                                    <span class="font-semibold">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></span>
+                                </div>
+                            <?php } ?>
+                        </div>
                     </div>
-</div>
-<div class="p-6 flex flex-col flex-grow">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Luxury Wellness Retreat for Two</h3>
-<p class="text-sm text-slate-500 mb-4 line-clamp-2">A 3-night stay at the Amaca Spa &amp; Resort including organic meals and daily yoga sessions.</p>
-<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-<div>
-<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
-<div class="text-2xl font-bold text-secondary">$1,250</div>
-</div>
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
-                            Bid Now
-                        </button>
-</div>
-</div>
-</div>
-<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
-<div class="relative h-60 overflow-hidden">
-<img alt="Local Artist Painting" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVCMgxfXcOzUHWras4bTvi_ZJEazxUgw1iMKwpzy1NUZZ6r3FW7N7SglAN6O5_MNRKbOl-3Q5sjBBUE_ajcnTPLPNeQ0yxALHLL3SYXN9CT5_8l4xyylZEknUKcSo_hqTIU0p6nzWkwNalxyPtKIv_DtRWV70Ju4M5AHOYBYyYlDB7VK5nYXm57JRgqY3oH4VRqLBUri1kYi4h9XzKQIcva2CjSdJTjxFGxTs5K7PYpKWLMWknpCO3yNXMEnRznlyN1ce3AY6Ykg"/>
-<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                        ENDING IN 5H 12M
+                <?php } ?>
+                <div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Puja actual</span>
+                        <div class="text-2xl font-bold text-secondary">$<?php echo number_format($precioActual, 2); ?></div>
+                        <?php if ($incremento > 0) { ?>
+                            <div class="text-xs text-slate-400">Minimo: $<?php echo number_format($minimo, 2); ?></div>
+                        <?php } ?>
                     </div>
-</div>
-<div class="p-6 flex flex-col flex-grow">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">"Harmony" - Original Oil on Canvas</h3>
-<p class="text-sm text-slate-500 mb-4 line-clamp-2">Exquisite local artwork donated by Maria Gonzalez. Size: 24x36 inches. Framed.</p>
-<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-<div>
-<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
-<div class="text-2xl font-bold text-secondary">$850</div>
-</div>
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
-                            Bid Now
+                    <form class="flex flex-col gap-2" action="pujar.php" method="post">
+                        <input type="hidden" name="producto_id" value="<?php echo (int) $producto["id"]; ?>" />
+                        <input type="hidden" name="categoria" value="<?php echo (int) $categoriaFiltro; ?>" />
+                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
+                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
+                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />
+                        <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto" type="number" />
+                        <button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" type="submit">
+                            Pujar
                         </button>
-</div>
-</div>
-</div>
-<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
-<div class="relative h-60 overflow-hidden">
-<img alt="Wine Tasting Event" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqVEY_aRdzhKSaYANfR-6B-1kp9l8fSfBgZCSRIEmrxtaKyD4Sa4j6KXY08pxw68w_D9-mVLnRBkSDybWqwXKK1cF4mgQGqbtGxm7Un3vd22jtR_IVZaGmSqXgKWfZtxUwxEIHCa_c2HzNxJw_EapqPFcSeDUpnFdNf70tXSrgnfJ_Mh6S-fcP5BgTtNcdR1ndkRK-kR_4vaaFTcS_04Tmg4nwdtVYRLcMUJ_b3bfRVTzVbJlNFUI9IXfrhlaecuUfc8vi6D2zmw"/>
-<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                        ENDING IN 1D 12H
-                    </div>
-</div>
-<div class="p-6 flex flex-col flex-grow">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Private Wine Tasting for 6</h3>
-<p class="text-sm text-slate-500 mb-4 line-clamp-2">Explore 6 premium labels with an expert sommelier in the comfort of your own home.</p>
-<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-<div>
-<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
-<div class="text-2xl font-bold text-secondary">$420</div>
-</div>
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
-                            Bid Now
-                        </button>
-</div>
-</div>
-</div>
-<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
-<div class="relative h-60 overflow-hidden">
-<img alt="Handmade Jewelry" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk4aj6sTALJ0ySZEZTCk5HjD3_d13AUnuMhVEufVnI-r4rl9yJfQbgTeiohT5xrJms3iKiQqDi0K8OlNqYpdvGILltZxUvcb2hrDHcr5SboKBw-yJjhZjh4uCCKIn08mFUazZkZPqq1rvsAkUaOUXaiDpOK5nsFVIf1NOEc5L1PD1A9YaFvDyANgSwuzWLL2MzXRdsm9VVFnWT9mArYHbt_EltIg8FKOnCOxcmiRMLOZ7Lj-df4HgXUEOjIjw5sx-GuvgQ1VV85A"/>
-<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                        ENDING IN 3D 8H
-                    </div>
-</div>
-<div class="p-6 flex flex-col flex-grow">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Handcrafted Sterling Silver Set</h3>
-<p class="text-sm text-slate-500 mb-4 line-clamp-2">Necklace and earrings set featuring authentic turquoise stones. One of a kind.</p>
-<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-<div>
-<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
-<div class="text-2xl font-bold text-secondary">$210</div>
-</div>
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
-                            Bid Now
-                        </button>
-</div>
-</div>
-</div>
-<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
-<div class="relative h-60 overflow-hidden">
-<img alt="Hiking Excursion" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWwkfuw3PwhUh9O9lyYcoKEb0-TBFGEAMlqzOYkxcTz1p6ivHQTRDceLWntKPrpM7Emxl8c9Sb8pipx2M8dYmTMamvuh19U49hTM3sirlPFw-KEscVVJ49-j66BDrB0dxAQb1ct9aFcf9C9-4e4Q13VLLWUs8JXO5PJV1vciE26KtPHqGF7lBoRScL71ak1nZeZpZTNgLfs51YeXxzH8_35H5Du2-Ng-tr9dn72-VrSAALIlxOmSA6eOdLq0z_OowSxpHZUCi3AQ"/>
-<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                        ENDING IN 12H 45M
-                    </div>
-</div>
-<div class="p-6 flex flex-col flex-grow">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Guided Adventure Mountain Hike</h3>
-<p class="text-sm text-slate-500 mb-4 line-clamp-2">Professional guide for a group of 4. Includes equipment and gourmet picnic lunch.</p>
-<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-<div>
-<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
-<div class="text-2xl font-bold text-secondary">$350</div>
-</div>
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
-                            Bid Now
-                        </button>
-</div>
-</div>
-</div>
-<div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
-<div class="relative h-60 overflow-hidden">
-<img alt="Villa Stay" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjOx7vruqZJMdHpTbi6SyJTHP0vHsZOR_RMSvM5TXWI7Inmx7USUoHl1RhumnGRZJC8WC9iVBZ4fsuIF9HfMzXmY-BUrg918YgW4O4N0rUsstkl-REqOzZAEeeWirSPJyb1enBdOh6awcZF-DYKz3ZxIqylQQOSJglXS58VZFRDe3VCKbznXVOtvsvHLWvLmPL7clEZfPEC46fvfHMXnY5XENGCX2CxjFpHZt9PJ4CfhhwF2-_GyJp3BV0bt26RCcazIR7ZcDrig"/>
-<div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                        ENDING IN 6D 2H
-                    </div>
-</div>
-<div class="p-6 flex flex-col flex-grow">
-<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">Banderas Bay Villa Weekend</h3>
-<p class="text-sm text-slate-500 mb-4 line-clamp-2">A luxurious 2-night stay in a private ocean-front villa. Perfect for family or friends.</p>
-<div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-<div>
-<span class="text-xs text-slate-400 uppercase font-semibold">Current Bid</span>
-<div class="text-2xl font-bold text-secondary">$1,800</div>
-</div>
-<button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all">
-                            Bid Now
-                        </button>
-</div>
-</div>
-</div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php } ?>
+<?php } ?>
 </div>
 <div class="mt-16 flex justify-center">
 <button class="flex items-center gap-2 px-8 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-full transition-all">
@@ -260,7 +290,7 @@
                         Pasitos de Luz is a civil association in Banderas Bay. It is a registered non-profit organization founded by mothers of disabled children to meet their therapeutic, psychological, nutritional, educational and basic needs.
                     </p>
 <div class="mt-6 text-sm opacity-80">
-                        Boulevard Federación | Nayarit, México | C.P. 63737<br/>
+                        Boulevard Federacion | Nayarit, Mexico | C.P. 63737<br/>
                         Tel: (+52) 322 135 6302 | info@pasitosdeluz.org
                     </div>
 </div>
@@ -314,7 +344,7 @@
 <div class="mt-12 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-slate-900 pt-8">
                     © 2023 Pasitos de Luz / Casa Connor. All rights reserved.
                     <div class="mt-3">
-                        <a class="font-semibold underline underline-offset-4 hover:text-primary" href="../php/login.php">Administración: agregar productos</a>
+                        <a class="font-semibold underline underline-offset-4 hover:text-primary" href="../php/login.php">Administracion: agregar productos</a>
                     </div>
                 </div>
 </div>
