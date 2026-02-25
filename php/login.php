@@ -35,6 +35,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $error = "Credenciales invalidas.";
     }
 }
+
+$statsActivos = 0;
+$statsPujasHoy = 0;
+$statsCerradas = 0;
+
+$resultActivos = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'activo'");
+if ($resultActivos) {
+    $row = $resultActivos->fetch_assoc();
+    $statsActivos = (int) ($row["total"] ?? 0);
+}
+
+$resultPujasHoy = $mysqli->query("SELECT COUNT(*) AS total FROM pujas WHERE DATE(fecha_puja) = CURDATE()");
+if ($resultPujasHoy) {
+    $row = $resultPujasHoy->fetch_assoc();
+    $statsPujasHoy = (int) ($row["total"] ?? 0);
+}
+
+$resultCerradas = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'finalizado'");
+if ($resultCerradas) {
+    $row = $resultCerradas->fetch_assoc();
+    $statsCerradas = (int) ($row["total"] ?? 0);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -82,15 +104,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="panel-stats">
                     <div>
                         <span>Productos activos</span>
-                        <strong>24</strong>
+                        <strong><?php echo number_format($statsActivos); ?></strong>
                     </div>
                     <div>
                         <span>Pujas hoy</span>
-                        <strong>86</strong>
+                        <strong><?php echo number_format($statsPujasHoy); ?></strong>
                     </div>
                     <div>
                         <span>Subastas cerradas</span>
-                        <strong>9</strong>
+                        <strong><?php echo number_format($statsCerradas); ?></strong>
                     </div>
                 </div>
             </div>

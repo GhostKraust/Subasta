@@ -33,12 +33,6 @@ if ($checkInc && $checkInc->num_rows > 0) {
     $hasIncremento = true;
 }
 
-$hasOrigen = false;
-$checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
-if ($checkOrigen && $checkOrigen->num_rows > 0) {
-    $hasOrigen = true;
-}
-
 $hasInicio = false;
 $checkInicio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_inicio'");
 if ($checkInicio && $checkInicio->num_rows > 0) {
@@ -104,9 +98,7 @@ if ($monto < $minimo) {
     exit;
 }
 
-$stmtInsert = $hasOrigen
-    ? $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja, origen) VALUES (?, ?, ?, ?, ?, NOW(), 'online')")
-    : $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja) VALUES (?, ?, ?, ?, ?, NOW())");
+$stmtInsert = $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja) VALUES (?, ?, ?, ?, ?, NOW())");
 if (!$stmtInsert) {
     header("Location: producto.php?id=" . $productoId . "&status=error");
     exit;

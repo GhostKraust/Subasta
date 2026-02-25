@@ -257,63 +257,6 @@ if ($resultAdmins) {
             </div>
         </section>
 
-        <section class="auth-card admin-presencial">
-            <h2 class="section-title">Registrar puja presencial</h2>
-            <form class="auth-form" action="puja_presencial.php" method="post">
-                <input type="hidden" name="moneda" value="<?php echo htmlspecialchars($moneda); ?>" />
-                <label class="field">
-                    <span>Buscar producto</span>
-                    <input id="presencial-search" type="text" placeholder="Escribe para filtrar" autocomplete="off" />
-                    <small class="field-hint" id="presencial-count"></small>
-                </label>
-                <label class="field">
-                    <span>Producto</span>
-                    <select id="presencial-select" name="producto_id" required>
-                        <option value="" disabled selected>Selecciona un producto</option>
-                        <?php foreach ($productos as $producto) { ?>
-                            <?php
-                                $inicioOk = true;
-                                if ($hasInicio) {
-                                    $fechaInicio = $producto["fecha_inicio"] ?? "";
-                                    if ($fechaInicio !== "") {
-                                        $inicioOk = strtotime($fechaInicio) <= $nowTimestamp;
-                                    }
-                                }
-                                $finOk = true;
-                                if ($hasFin) {
-                                    $fechaFin = $producto["fecha_fin"] ?? "";
-                                    if ($fechaFin !== "") {
-                                        $finOk = strtotime($fechaFin) >= $nowTimestamp;
-                                    }
-                                }
-                                $productoId = (int) ($producto["id"] ?? 0);
-                                $maxPuja = $maxPujas[$productoId] ?? 0.0;
-                                $precioBase = (float) ($producto["precio"] ?? 0);
-                                if ($maxPuja > $precioBase) {
-                                    $precioBase = $maxPuja;
-                                }
-                                $incremento = $hasIncremento ? (float) ($producto["incremento_minimo"] ?? 0) : 0.0;
-                                $minimoPuja = $precioBase + $incremento;
-                                $minimoConvertido = convertAmount($minimoPuja, $moneda, $rates);
-                            ?>
-                            <?php if (($producto["estado"] ?? "") === "activo" && $inicioOk && $finOk) { ?>
-                                <?php $nombreProducto = trim($producto["nombre"] ?? ""); ?>
-                                <option value="<?php echo $productoId; ?>" data-min="<?php echo htmlspecialchars((string) $minimoConvertido); ?>">
-                                    <?php echo htmlspecialchars($nombreProducto); ?>
-                                </option>
-                            <?php } ?>
-                        <?php } ?>
-                    </select>
-                </label>
-                <label class="field">
-                    <span>Monto de la puja</span>
-                    <input id="presencial-monto" name="monto_puja" type="number" min="1" step="1" required placeholder="900" />
-                    <small class="field-hint" id="presencial-min"></small>
-                </label>
-                <button class="btn" type="submit">Registrar puja presencial</button>
-            </form>
-        </section>
-
         <section class="auth-card admin-staff">
             <h2 class="section-title">Personal administrativo</h2>
             <?php if ($staffStatus === "created") { ?>
@@ -377,6 +320,63 @@ if ($resultAdmins) {
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <section class="auth-card admin-presencial">
+            <h2 class="section-title">Registrar puja presencial</h2>
+            <form class="auth-form" action="puja_presencial.php" method="post">
+                <input type="hidden" name="moneda" value="<?php echo htmlspecialchars($moneda); ?>" />
+                <label class="field">
+                    <span>Buscar producto</span>
+                    <input id="presencial-search" type="text" placeholder="Escribe para filtrar" autocomplete="off" />
+                    <small class="field-hint" id="presencial-count"></small>
+                </label>
+                <label class="field">
+                    <span>Producto</span>
+                    <select id="presencial-select" name="producto_id" required>
+                        <option value="" disabled selected>Selecciona un producto</option>
+                        <?php foreach ($productos as $producto) { ?>
+                            <?php
+                                $inicioOk = true;
+                                if ($hasInicio) {
+                                    $fechaInicio = $producto["fecha_inicio"] ?? "";
+                                    if ($fechaInicio !== "") {
+                                        $inicioOk = strtotime($fechaInicio) <= $nowTimestamp;
+                                    }
+                                }
+                                $finOk = true;
+                                if ($hasFin) {
+                                    $fechaFin = $producto["fecha_fin"] ?? "";
+                                    if ($fechaFin !== "") {
+                                        $finOk = strtotime($fechaFin) >= $nowTimestamp;
+                                    }
+                                }
+                                $productoId = (int) ($producto["id"] ?? 0);
+                                $maxPuja = $maxPujas[$productoId] ?? 0.0;
+                                $precioBase = (float) ($producto["precio"] ?? 0);
+                                if ($maxPuja > $precioBase) {
+                                    $precioBase = $maxPuja;
+                                }
+                                $incremento = $hasIncremento ? (float) ($producto["incremento_minimo"] ?? 0) : 0.0;
+                                $minimoPuja = $precioBase + $incremento;
+                                $minimoConvertido = convertAmount($minimoPuja, $moneda, $rates);
+                            ?>
+                            <?php if (($producto["estado"] ?? "") === "activo" && $inicioOk && $finOk) { ?>
+                                <?php $nombreProducto = trim($producto["nombre"] ?? ""); ?>
+                                <option value="<?php echo $productoId; ?>" data-min="<?php echo htmlspecialchars((string) $minimoConvertido); ?>">
+                                    <?php echo htmlspecialchars($nombreProducto); ?>
+                                </option>
+                            <?php } ?>
+                        <?php } ?>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Monto de la puja</span>
+                    <input id="presencial-monto" name="monto_puja" type="number" min="1" step="1" required placeholder="900" />
+                    <small class="field-hint" id="presencial-min"></small>
+                </label>
+                <button class="btn" type="submit">Registrar puja presencial</button>
+            </form>
         </section>
 
         <section class="auth-card admin-new">
@@ -455,6 +455,8 @@ if ($resultAdmins) {
                 <a class="link" href="subasta.php">Volver a subasta</a>
             </div>
         </section>
+
+
     </main>
     <script>
         (function () {
