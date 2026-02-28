@@ -45,6 +45,26 @@ a {
     text-decoration: none;
 }
 
+.toast-pink {
+    background: #ff5c8a;
+    color: #fff;
+    border: none;
+}
+
+.toast-pink .toast-header {
+    background: #ff5c8a;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.toast-pink .toast-body {
+    color: #fff;
+}
+
+.toast-pink .btn-close {
+    filter: invert(1);
+}
+
 .auth {
     min-height: 100vh;
     display: grid;
@@ -71,6 +91,21 @@ a {
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
+}
+
+.panel-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.panel-actions .btn.btn-compact {
+    min-width: 170px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    justify-content: center;
 }
 
 .currency-label {
@@ -236,6 +271,12 @@ h1 {
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     width: 100%;
+}
+
+.btn.btn-compact {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    width: auto;
 }
 
 .btn:hover {

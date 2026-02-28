@@ -188,7 +188,9 @@ if ($categoriaFiltro > 0) {
                 </div>
                 <?php if (!$estadoActual) { ?>
                     <div class="bg-slate-100 dark:bg-slate-800/60 text-slate-500 rounded-2xl px-4 py-3 text-sm">
-                        <?php if ($fin !== null && $ahora > $fin) { ?>
+                        <?php if (($producto["estado"] ?? "") === "pausado") { ?>
+                            Esta subasta esta pausada.
+                        <?php } elseif ($fin !== null && $ahora > $fin) { ?>
                             Esta subasta esta finalizada.
                         <?php } elseif ($inicio !== null && $ahora < $inicio) { ?>
                             Esta subasta inicia el <?php echo htmlspecialchars($inicio->format("d/m/Y H:i")); ?>.
@@ -207,7 +209,7 @@ if ($categoriaFiltro > 0) {
             </div>
             <?php if ($status === "ok") { ?>
                 <div class="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl px-4 py-3">
-                    Tu puja fue registrada correctamente.
+                    Tu oferta sea realizado
                 </div>
             <?php } elseif ($status === "error") { ?>
                 <div class="bg-rose-50 text-rose-700 border border-rose-200 rounded-2xl px-4 py-3">

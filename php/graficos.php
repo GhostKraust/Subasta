@@ -1,5 +1,196 @@
 <?php
-// Placeholder for future data loading.
+require_once __DIR__ . "/auth.php";
+require_admin();
+require_once __DIR__ . "/../config/db.php";
+
+if (!empty($_GET["data"])) {
+  header("Content-Type: application/json; charset=utf-8");
+
+  $range = trim($_GET["range"] ?? "30d");
+  $rangeDays = 30;
+  if ($range === "7d") {
+    $rangeDays = 7;
+  } elseif ($range === "90d") {
+    $rangeDays = 90;
+  }
+
+  $fromRaw = trim($_GET["from"] ?? "");
+  $toRaw = trim($_GET["to"] ?? "");
+  $today = new DateTime("today");
+  $fromDate = clone $today;
+  $fromDate->modify("-" . ($rangeDays - 1) . " days");
+  $toDate = clone $today;
+
+  if ($fromRaw !== "") {
+    $fromParsed = DateTime::createFromFormat("Y-m-d", $fromRaw);
+    if ($fromParsed) {
+      $fromDate = $fromParsed;
+    }
+  }
+  if ($toRaw !== "") {
+    $toParsed = DateTime::createFromFormat("Y-m-d", $toRaw);
+    if ($toParsed) {
+      $toDate = $toParsed;
+    }
+  }
+
+  if ($fromDate > $toDate) {
+    $temp = $fromDate;
+    $fromDate = $toDate;
+    $toDate = $temp;
+  }
+
+  $fromSql = $fromDate->format("Y-m-d 00:00:00");
+  $toSql = $toDate->format("Y-m-d 23:59:59");
+
+  $precioColumn = "predcio_inicial";
+  $checkPrecio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'predcio_inicial'");
+  if ($checkPrecio && $checkPrecio->num_rows === 0) {
+    $checkPrecioAlt = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'precio_inicial'");
+    if ($checkPrecioAlt && $checkPrecioAlt->num_rows > 0) {
+      $precioColumn = "precio_inicial";
+    }
+  }
+
+  $hours = [];
+  $bids = [];
+  for ($i = 0; $i < 24; $i++) {
+    $hours[] = str_pad((string) $i, 2, "0", STR_PAD_LEFT);
+    $bids[] = 0;
+  }
+
+  $stmtHours = $mysqli->prepare("SELECT HOUR(fecha_puja) AS hr, COUNT(*) AS total FROM pujas WHERE fecha_puja BETWEEN ? AND ? GROUP BY hr");
+  if ($stmtHours) {
+    $stmtHours->bind_param("ss", $fromSql, $toSql);
+    $stmtHours->execute();
+    $result = $stmtHours->get_result();
+    while ($row = $result->fetch_assoc()) {
+      $hr = (int) ($row["hr"] ?? 0);
+      if ($hr >= 0 && $hr < 24) {
+        $bids[$hr] = (int) ($row["total"] ?? 0);
+      }
+    }
+    $stmtHours->close();
+  }
+
+  $topProducts = [];
+  $stmtTop = $mysqli->prepare(
+    "SELECT p.id, p.nombre, COALESCE(MAX(pu.monto_puja), p.$precioColumn) AS total " .
+    "FROM productos p " .
+    "LEFT JOIN pujas pu ON pu.producto_id = p.id AND pu.fecha_puja BETWEEN ? AND ? " .
+    "WHERE p.nombre IS NOT NULL AND p.nombre <> '' " .
+    "GROUP BY p.id ORDER BY total DESC LIMIT 5"
+  );
+  if ($stmtTop) {
+    $stmtTop->bind_param("ss", $fromSql, $toSql);
+    $stmtTop->execute();
+    $result = $stmtTop->get_result();
+    while ($row = $result->fetch_assoc()) {
+      $topProducts[] = [
+        "name" => $row["nombre"],
+        "value" => (float) ($row["total"] ?? 0)
+      ];
+    }
+    $stmtTop->close();
+  }
+
+  $states = [];
+  $resultStates = $mysqli->query("SELECT estado, COUNT(*) AS total FROM productos GROUP BY estado");
+  if ($resultStates) {
+    while ($row = $resultStates->fetch_assoc()) {
+      $label = ucfirst((string) ($row["estado"] ?? ""));
+      $states[] = ["name" => $label, "value" => (int) ($row["total"] ?? 0)];
+    }
+  }
+
+  $radarLabels = [];
+  $radarValues = [];
+  $stmtRadar = $mysqli->prepare(
+    "SELECT c.nombre, SUM(COALESCE(mx.max_puja, mx.precio_base)) AS total " .
+    "FROM categorias c " .
+    "LEFT JOIN (" .
+      "SELECT p.id, p.categoria_id, COALESCE(MAX(pu.monto_puja), p.$precioColumn) AS max_puja, p.$precioColumn AS precio_base " .
+      "FROM productos p " .
+      "LEFT JOIN pujas pu ON pu.producto_id = p.id AND pu.fecha_puja BETWEEN ? AND ? " .
+      "GROUP BY p.id" .
+    ") mx ON mx.categoria_id = c.id " .
+    "GROUP BY c.id, c.nombre ORDER BY c.nombre"
+  );
+  if ($stmtRadar) {
+    $stmtRadar->bind_param("ss", $fromSql, $toSql);
+    $stmtRadar->execute();
+    $result = $stmtRadar->get_result();
+    $maxValue = 1;
+    $rawTotals = [];
+    while ($row = $result->fetch_assoc()) {
+      $total = (float) ($row["total"] ?? 0);
+      $rawTotals[] = $total;
+      $radarLabels[] = $row["nombre"] ?? "Sin categoria";
+      if ($total > $maxValue) {
+        $maxValue = $total;
+      }
+    }
+    foreach ($rawTotals as $total) {
+      $radarValues[] = $maxValue > 0 ? round(($total / $maxValue) * 100) : 0;
+    }
+    $stmtRadar->close();
+  }
+
+  $topBidder = ["name" => "-", "total" => 0, "count" => 0];
+  $stmtBidder = $mysqli->prepare(
+    "SELECT nombre_usuario, SUM(monto_puja) AS total, COUNT(*) AS total_pujas " .
+    "FROM pujas WHERE fecha_puja BETWEEN ? AND ? GROUP BY nombre_usuario " .
+    "ORDER BY total DESC LIMIT 1"
+  );
+  if ($stmtBidder) {
+    $stmtBidder->bind_param("ss", $fromSql, $toSql);
+    $stmtBidder->execute();
+    $result = $stmtBidder->get_result();
+    $row = $result ? $result->fetch_assoc() : null;
+    if ($row) {
+      $topBidder = [
+        "name" => $row["nombre_usuario"] ?? "-",
+        "total" => (float) ($row["total"] ?? 0),
+        "count" => (int) ($row["total_pujas"] ?? 0)
+      ];
+    }
+    $stmtBidder->close();
+  }
+
+  $topProduct = ["name" => "-", "count" => 0];
+  $stmtMost = $mysqli->prepare(
+    "SELECT p.nombre, COUNT(pu.id) AS total " .
+    "FROM productos p " .
+    "LEFT JOIN pujas pu ON pu.producto_id = p.id AND pu.fecha_puja BETWEEN ? AND ? " .
+    "GROUP BY p.id ORDER BY total DESC LIMIT 1"
+  );
+  if ($stmtMost) {
+    $stmtMost->bind_param("ss", $fromSql, $toSql);
+    $stmtMost->execute();
+    $result = $stmtMost->get_result();
+    $row = $result ? $result->fetch_assoc() : null;
+    if ($row) {
+      $topProduct = [
+        "name" => $row["nombre"] ?? "-",
+        "count" => (int) ($row["total"] ?? 0)
+      ];
+    }
+    $stmtMost->close();
+  }
+
+  echo json_encode([
+    "hours" => $hours,
+    "bids" => $bids,
+    "topProducts" => $topProducts,
+    "states" => $states,
+    "radar" => ["labels" => $radarLabels, "values" => $radarValues],
+    "topBidder" => $topBidder,
+    "topProduct" => $topProduct,
+    "from" => $fromDate->format("Y-m-d"),
+    "to" => $toDate->format("Y-m-d")
+  ]);
+  exit;
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -36,6 +227,16 @@
           <option value="30d" selected>Ultimos 30 dias</option>
           <option value="90d">Ultimos 90 dias</option>
         </select>
+      </label>
+
+      <label class="filter">
+        Desde
+        <input id="filter-from" type="date" />
+      </label>
+
+      <label class="filter">
+        Hasta
+        <input id="filter-to" type="date" />
       </label>
 
       <label class="filter">
@@ -80,10 +281,33 @@
         </div>
         <div id="chart-radar" class="chart"></div>
       </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>Mayor postor</h2>
+          <span class="chip">Rango</span>
+        </div>
+        <div class="stat-block">
+          <h3 id="top-bidder-name">-</h3>
+          <p id="top-bidder-total">$0</p>
+          <small id="top-bidder-count">0 pujas</small>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>Producto mas pujados</h2>
+          <span class="chip">Rango</span>
+        </div>
+        <div class="stat-block">
+          <h3 id="top-product-name">-</h3>
+          <p id="top-product-count">0 pujas</p>
+        </div>
+      </article>
     </section>
   </div>
 
-  <script src="../js/graficos.js"></script>
+  <script src="../js/graficos.js?v=2"></script>
 </body>
 
 </html>

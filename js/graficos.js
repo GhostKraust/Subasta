@@ -1,56 +1,5 @@
 const $ = (id) => document.getElementById(id);
 
-const datasets = {
-  "7d": {
-    hours: ["10","12","14","16","18","20","22"],
-    bids: [12, 18, 15, 22, 19, 28, 24],
-    topProducts: [
-      { name: "Silla", value: 42 },
-      { name: "Mesa", value: 36 },
-      { name: "Lampara", value: 28 },
-      { name: "Cuadro", value: 21 }
-    ],
-    states: [
-      { name: "Activas", value: 52 },
-      { name: "Finalizadas", value: 31 },
-      { name: "Pausadas", value: 17 }
-    ],
-    radar: { labels: ["Arte","Muebles","Tech","Moda","Coleccion"], values: [62, 50, 75, 48, 58] }
-  },
-  "30d": {
-    hours: ["10","12","14","16","18","20","22"],
-    bids: [24, 30, 28, 35, 31, 40, 36],
-    topProducts: [
-      { name: "Reloj", value: 68 },
-      { name: "Camara", value: 52 },
-      { name: "Vinilo", value: 44 },
-      { name: "Bicicleta", value: 37 }
-    ],
-    states: [
-      { name: "Activas", value: 61 },
-      { name: "Finalizadas", value: 28 },
-      { name: "Pausadas", value: 11 }
-    ],
-    radar: { labels: ["Arte","Muebles","Tech","Moda","Coleccion"], values: [70, 58, 82, 55, 64] }
-  },
-  "90d": {
-    hours: ["10","12","14","16","18","20","22"],
-    bids: [40, 46, 44, 52, 49, 58, 54],
-    topProducts: [
-      { name: "Consola", value: 90 },
-      { name: "Libro", value: 74 },
-      { name: "Joyeria", value: 63 },
-      { name: "Escultura", value: 55 }
-    ],
-    states: [
-      { name: "Activas", value: 58 },
-      { name: "Finalizadas", value: 35 },
-      { name: "Pausadas", value: 7 }
-    ],
-    radar: { labels: ["Arte","Muebles","Tech","Moda","Coleccion"], values: [78, 64, 88, 60, 72] }
-  }
-};
-
 const baseText = { fontFamily: "Space Grotesk, sans-serif", fontSize: 12, color: "#2a2420" };
 const grid = { left: 36, right: 16, top: 24, bottom: 28 };
 
@@ -80,8 +29,10 @@ function lineSeries(style, data) {
   return common;
 }
 
-function renderCharts(rangeKey, lineStyle) {
-  const data = datasets[rangeKey];
+function renderCharts(data, lineStyle) {
+  if (!data) {
+    return;
+  }
 
   charts.line.setOption({
     textStyle: baseText,
@@ -129,7 +80,11 @@ function renderCharts(rangeKey, lineStyle) {
       type: "pie",
       radius: ["45%", "70%"],
       data: data.states,
-      label: { color: "#3a332e", fontSize: 12 },
+      label: {
+        color: "#3a332e",
+        fontSize: 12,
+        formatter: (params) => `${params.name}: ${params.value}`
+      },
       labelLine: { length: 10, length2: 8 }
     }]
   });
@@ -151,13 +106,81 @@ function renderCharts(rangeKey, lineStyle) {
   });
 }
 
+function updateStats(data) {
+  const bidderName = $("top-bidder-name");
+  const bidderTotal = $("top-bidder-total");
+  const bidderCount = $("top-bidder-count");
+  const productName = $("top-product-name");
+  const productCount = $("top-product-count");
+
+  if (bidderName) {
+    bidderName.textContent = data.topBidder.name || "-";
+  }
+  if (bidderTotal) {
+    bidderTotal.textContent = "$" + Number(data.topBidder.total || 0).toLocaleString();
+  }
+  if (bidderCount) {
+    bidderCount.textContent = (data.topBidder.count || 0) + " pujas";
+  }
+  if (productName) {
+    productName.textContent = data.topProduct.name || "-";
+  }
+  if (productCount) {
+    productCount.textContent = (data.topProduct.count || 0) + " pujas";
+  }
+}
+
+async function fetchData(rangeKey, fromDate, toDate) {
+  const params = new URLSearchParams({ data: "1", range: rangeKey });
+  if (fromDate) {
+    params.set("from", fromDate);
+  }
+  if (toDate) {
+    params.set("to", toDate);
+  }
+
+  const response = await fetch(`graficos.php?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("No se pudo cargar la data.");
+  }
+
+  return response.json();
+}
+
 function initFilters() {
   const range = $("filter-range");
   const style = $("filter-line-style");
+  const from = $("filter-from");
+  const to = $("filter-to");
 
-  const update = () => renderCharts(range.value, style.value);
+  const update = async () => {
+    try {
+      const data = await fetchData(
+        range.value,
+        from && from.value ? from.value : "",
+        to && to.value ? to.value : ""
+      );
+      if (from && data.from) {
+        from.value = data.from;
+      }
+      if (to && data.to) {
+        to.value = data.to;
+      }
+      renderCharts(data, style.value);
+      updateStats(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   range.addEventListener("change", update);
   style.addEventListener("change", update);
+  if (from) {
+    from.addEventListener("change", update);
+  }
+  if (to) {
+    to.addEventListener("change", update);
+  }
 
   update();
 }

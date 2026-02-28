@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 
 $precioColumn = "predcio_inicial";
@@ -121,8 +122,10 @@ if ($resultPujas) {
             </div>
         </div>
         <div class="dash-actions">
-            <a class="btn ghost" href="panel.php">Nuevo producto</a>
-            <a class="btn" href="logout.php">Cerrar sesion</a>
+            <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
+            <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
+            <a class="btn btn-compact ghost" href="panel.php">Nuevo producto</a>
+            <a class="btn btn-compact" href="logout.php">Cerrar sesion</a>
         </div>
     </header>
 

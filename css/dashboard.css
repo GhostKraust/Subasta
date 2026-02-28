@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
 }
 
 .dash-title {
@@ -29,6 +29,13 @@
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+.dash-actions .btn.btn-compact {
+    min-width: 170px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    justify-content: center;
 }
 
 .btn.ghost {
