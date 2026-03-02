@@ -74,6 +74,8 @@ function formatCurrency($amountMXN, $currency, $rates)
 }
 
 $categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
+$ordenFiltro = trim($_GET["orden"] ?? "");
+$busqueda = trim($_GET["q"] ?? "");
 $status = trim($_GET["status"] ?? "");
 
 $productos = [];
@@ -87,7 +89,21 @@ if ($hasFin) {
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
-$queryProductos .= " ORDER BY p.id DESC";
+if ($busqueda !== "") {
+    $safeSearch = $mysqli->real_escape_string($busqueda);
+    $queryProductos .= " AND (p.nombre LIKE '%" . $safeSearch . "%' OR p.descripcion LIKE '%" . $safeSearch . "%')";
+}
+
+$orderClause = " ORDER BY p.id DESC";
+if ($ordenFiltro === "precio_asc") {
+    $orderClause = " ORDER BY COALESCE(pu.max_puja, p.$precioColumn) ASC, p.id DESC";
+} elseif ($ordenFiltro === "precio_desc") {
+    $orderClause = " ORDER BY COALESCE(pu.max_puja, p.$precioColumn) DESC, p.id DESC";
+} elseif ($ordenFiltro === "fin" && $hasFin) {
+    $orderClause = " ORDER BY (p.fecha_fin IS NULL), p.fecha_fin ASC, p.id DESC";
+}
+
+$queryProductos .= $orderClause;
 $resultProductos = $mysqli->query($queryProductos);
 if ($resultProductos) {
     while ($row = $resultProductos->fetch_assoc()) {
@@ -203,30 +219,29 @@ if ($resultProductos) {
 </div>
 <?php } ?>
 <div class="container mx-auto px-6 mt-8">
-<div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-<div class="flex items-center gap-4">
-<span class="font-medium text-slate-500">Filter by:</span>
-<form method="get">
-<select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
-<option value="0">Todas las categorias</option>
-<?php foreach ($categorias as $categoria) { ?>
-<option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
-<?php echo htmlspecialchars($categoria["nombre"]); ?>
-</option>
-<?php } ?>
-</select>
+<form method="get" class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+    <div class="flex items-center gap-4">
+        <span class="font-medium text-slate-500">Filter by:</span>
+        <select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+            <option value="0">Todas las categorias</option>
+            <?php foreach ($categorias as $categoria) { ?>
+                <option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
+                    <?php echo htmlspecialchars($categoria["nombre"]); ?>
+                </option>
+            <?php } ?>
+        </select>
+        <select name="orden" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+            <option value="">Ordenar</option>
+            <option value="precio_asc" <?php echo $ordenFiltro === "precio_asc" ? "selected" : ""; ?>>Price: Low to High</option>
+            <option value="precio_desc" <?php echo $ordenFiltro === "precio_desc" ? "selected" : ""; ?>>Price: High to Low</option>
+            <option value="fin" <?php echo $ordenFiltro === "fin" ? "selected" : ""; ?>>Ending Soon</option>
+        </select>
+    </div>
+    <div class="relative w-full md:w-64">
+        <input name="q" value="<?php echo htmlspecialchars($busqueda); ?>" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
+        <span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
+    </div>
 </form>
-<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary">
-<option>Price: Low to High</option>
-<option>Price: High to Low</option>
-<option>Ending Soon</option>
-</select>
-</div>
-<div class="relative w-full md:w-64">
-<input class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
-<span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
-</div>
-</div>
 </div>
 <main class="container mx-auto px-6 py-12">
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -235,6 +250,19 @@ if ($resultProductos) {
         Aun no hay productos activos en subasta.
     </div>
 <?php } else { ?>
+    <?php
+        $extraParams = [];
+        if ($categoriaFiltro > 0) {
+            $extraParams[] = "categoria=" . $categoriaFiltro;
+        }
+        if ($ordenFiltro !== "") {
+            $extraParams[] = "orden=" . urlencode($ordenFiltro);
+        }
+        if ($busqueda !== "") {
+            $extraParams[] = "q=" . urlencode($busqueda);
+        }
+        $extraQuery = count($extraParams) > 0 ? "&" . implode("&", $extraParams) : "";
+    ?>
     <?php foreach ($productos as $producto) { ?>
         <?php
             $img = $producto["imagen_url"] ?? "";
@@ -253,6 +281,7 @@ if ($resultProductos) {
             $activoTiempo = ($inicio === null || $ahora >= $inicio) && ($fin === null || $ahora <= $fin);
             $estadoActual = ($producto["estado"] ?? "activo") === "activo" && $activoTiempo;
             $statusBadge = "";
+            $tiempoRestanteTexto = "";
             if (!$estadoActual) {
                 if ($fin !== null && $ahora > $fin) {
                     $statusBadge = "Finalizado";
@@ -260,6 +289,19 @@ if ($resultProductos) {
                     $statusBadge = "Inicia pronto";
                 } else {
                     $statusBadge = "No disponible";
+                }
+            } elseif ($fin !== null) {
+                $secondsLeft = $fin->getTimestamp() - $ahora->getTimestamp();
+                if ($secondsLeft > 0) {
+                    if ($secondsLeft < 3600) {
+                        $tiempoRestanteTexto = "Menos de 1 hora";
+                    } elseif ($secondsLeft <= 86400) {
+                        $hoursLeft = (int) ceil($secondsLeft / 3600);
+                        $tiempoRestanteTexto = "Faltan " . $hoursLeft . " horas";
+                    } else {
+                        $daysLeft = (int) ceil($secondsLeft / 86400);
+                        $tiempoRestanteTexto = "Faltan " . $daysLeft . " dias";
+                    }
                 }
             }
         ?>
@@ -269,7 +311,12 @@ if ($resultProductos) {
                     <img alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>" class="w-full h-full object-cover" src="<?php echo htmlspecialchars($img); ?>"/>
                 <?php } ?>
                 <div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                    <?php echo htmlspecialchars($producto["categoria"] ?? ""); ?>
+                    <div><?php echo htmlspecialchars($producto["categoria"] ?? ""); ?></div>
+                    <?php if ($tiempoRestanteTexto !== "") { ?>
+                        <div class="text-[10px] font-semibold text-slate-500">
+                            <?php echo htmlspecialchars($tiempoRestanteTexto); ?>
+                        </div>
+                    <?php } ?>
                 </div>
                 <?php if ($statusBadge !== "") { ?>
                     <div class="absolute top-4 left-4 bg-slate-900/80 text-white px-3 py-1 rounded-full text-xs font-semibold">
@@ -295,7 +342,7 @@ if ($resultProductos) {
                             <?php } ?>
                         </div>
                     </div>
-                    <a class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" href="producto.php?id=<?php echo (int) $producto["id"]; ?>&categoria=<?php echo (int) $categoriaFiltro; ?>">
+                    <a class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" href="producto.php?id=<?php echo (int) $producto["id"]; ?><?php echo $extraQuery; ?>">
                         <?php echo $estadoActual ? "Ver y pujar" : "Ver detalles"; ?>
                     </a>
                 </div>

@@ -6,13 +6,7 @@ require_once __DIR__ . "/../config/db.php";
 if (!empty($_GET["data"])) {
   header("Content-Type: application/json; charset=utf-8");
 
-  $range = trim($_GET["range"] ?? "30d");
   $rangeDays = 30;
-  if ($range === "7d") {
-    $rangeDays = 7;
-  } elseif ($range === "90d") {
-    $rangeDays = 90;
-  }
 
   $fromRaw = trim($_GET["from"] ?? "");
   $toRaw = trim($_GET["to"] ?? "");
@@ -75,11 +69,11 @@ if (!empty($_GET["data"])) {
 
   $topProducts = [];
   $stmtTop = $mysqli->prepare(
-    "SELECT p.id, p.nombre, COALESCE(MAX(pu.monto_puja), p.$precioColumn) AS total " .
+    "SELECT p.id, TRIM(p.nombre) AS nombre, COUNT(pu.id) AS total " .
     "FROM productos p " .
     "LEFT JOIN pujas pu ON pu.producto_id = p.id AND pu.fecha_puja BETWEEN ? AND ? " .
-    "WHERE p.nombre IS NOT NULL AND p.nombre <> '' " .
-    "GROUP BY p.id ORDER BY total DESC LIMIT 5"
+    "WHERE p.nombre IS NOT NULL AND TRIM(p.nombre) <> '' " .
+    "GROUP BY p.id HAVING total > 0 ORDER BY total DESC, p.id DESC LIMIT 5"
   );
   if ($stmtTop) {
     $stmtTop->bind_param("ss", $fromSql, $toSql);
@@ -88,7 +82,7 @@ if (!empty($_GET["data"])) {
     while ($row = $result->fetch_assoc()) {
       $topProducts[] = [
         "name" => $row["nombre"],
-        "value" => (float) ($row["total"] ?? 0)
+        "value" => (int) ($row["total"] ?? 0)
       ];
     }
     $stmtTop->close();
@@ -157,20 +151,19 @@ if (!empty($_GET["data"])) {
     $stmtBidder->close();
   }
 
-  $topProduct = ["name" => "-", "count" => 0];
+  $topProduct = [];
   $stmtMost = $mysqli->prepare(
     "SELECT p.nombre, COUNT(pu.id) AS total " .
     "FROM productos p " .
     "LEFT JOIN pujas pu ON pu.producto_id = p.id AND pu.fecha_puja BETWEEN ? AND ? " .
-    "GROUP BY p.id ORDER BY total DESC LIMIT 1"
+    "GROUP BY p.id ORDER BY total DESC, p.id DESC LIMIT 3"
   );
   if ($stmtMost) {
     $stmtMost->bind_param("ss", $fromSql, $toSql);
     $stmtMost->execute();
     $result = $stmtMost->get_result();
-    $row = $result ? $result->fetch_assoc() : null;
-    if ($row) {
-      $topProduct = [
+    while ($row = $result->fetch_assoc()) {
+      $topProduct[] = [
         "name" => $row["nombre"] ?? "-",
         "count" => (int) ($row["total"] ?? 0)
       ];
@@ -216,19 +209,11 @@ if (!empty($_GET["data"])) {
         <button class="theme-btn" data-theme="sunset">Sunset</button>
         <button class="theme-btn" data-theme="ocean">Ocean</button>
         <button class="theme-btn" data-theme="mint">Mint</button>
+        <a class="theme-btn" href="dashboard.php">Dashboard</a>
       </div>
     </header>
 
     <section class="filters">
-      <label class="filter">
-        Rango
-        <select id="filter-range">
-          <option value="7d">Ultimos 7 dias</option>
-          <option value="30d" selected>Ultimos 30 dias</option>
-          <option value="90d">Ultimos 90 dias</option>
-        </select>
-      </label>
-
       <label class="filter">
         Desde
         <input id="filter-from" type="date" />
@@ -237,15 +222,6 @@ if (!empty($_GET["data"])) {
       <label class="filter">
         Hasta
         <input id="filter-to" type="date" />
-      </label>
-
-      <label class="filter">
-        Estilo linea
-        <select id="filter-line-style">
-          <option value="line" selected>Linea</option>
-          <option value="area">Area</option>
-          <option value="step">Escalon</option>
-        </select>
       </label>
     </section>
 
@@ -285,7 +261,7 @@ if (!empty($_GET["data"])) {
       <article class="card">
         <div class="card-head">
           <h2>Mayor postor</h2>
-          <span class="chip">Rango</span>
+          <span class="chip">Periodo</span>
         </div>
         <div class="stat-block">
           <h3 id="top-bidder-name">-</h3>
@@ -296,12 +272,11 @@ if (!empty($_GET["data"])) {
 
       <article class="card">
         <div class="card-head">
-          <h2>Producto mas pujados</h2>
-          <span class="chip">Rango</span>
+          <h2>Productos mas pujados</h2>
+          <span class="chip">Periodo</span>
         </div>
         <div class="stat-block">
-          <h3 id="top-product-name">-</h3>
-          <p id="top-product-count">0 pujas</p>
+          <ul id="top-product-list" class="stat-list"></ul>
         </div>
       </article>
     </section>

@@ -15,6 +15,33 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$fromRaw = trim($_GET["from"] ?? "");
+$toRaw = trim($_GET["to"] ?? "");
+$categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
+
+$fromDate = null;
+$toDate = null;
+if ($fromRaw !== "") {
+    $parsed = DateTime::createFromFormat("Y-m-d", $fromRaw);
+    if ($parsed) {
+        $fromDate = $parsed;
+    }
+}
+if ($toRaw !== "") {
+    $parsed = DateTime::createFromFormat("Y-m-d", $toRaw);
+    if ($parsed) {
+        $toDate = $parsed;
+    }
+}
+if ($fromDate && $toDate && $fromDate > $toDate) {
+    $temp = $fromDate;
+    $fromDate = $toDate;
+    $toDate = $temp;
+}
+
+$fromSql = $fromDate ? $fromDate->format("Y-m-d 00:00:00") : "";
+$toSql = $toDate ? $toDate->format("Y-m-d 23:59:59") : "";
+
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
 $condFinal = "p.estado = 'finalizado'";
 if ($hasFin) {
@@ -36,8 +63,20 @@ $query = "SELECT p.id, p.nombre$selectFin, p.estado, " .
             "FROM pujas GROUP BY producto_id" .
         ") mf ON pu1.producto_id = mf.producto_id AND pu1.fecha_puja = mf.max_fecha" .
     ") w ON w.producto_id = p.id " .
-    "WHERE $condFinal " .
-    "ORDER BY " . ($hasFin ? "p.fecha_fin DESC, " : "") . "p.id DESC";
+    "WHERE $condFinal";
+
+$dateField = $hasFin ? "p.fecha_fin" : "w.fecha_puja";
+if ($fromSql !== "") {
+    $query .= " AND $dateField >= '" . $mysqli->real_escape_string($fromSql) . "'";
+}
+if ($toSql !== "") {
+    $query .= " AND $dateField <= '" . $mysqli->real_escape_string($toSql) . "'";
+}
+if ($categoriaFiltro > 0) {
+    $query .= " AND p.categoria_id = " . $categoriaFiltro;
+}
+
+$query .= " ORDER BY " . ($hasFin ? "p.fecha_fin DESC, " : "") . "p.id DESC";
 
 $rows = [];
 $result = $mysqli->query($query);

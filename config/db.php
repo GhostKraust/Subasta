@@ -4,6 +4,7 @@ $DB_USER = "root";
 $DB_PASS = "";
 $DB_NAME = "subasta";
 
+
 $APP_TZ = "America/Mexico_City";
 date_default_timezone_set($APP_TZ);
 
