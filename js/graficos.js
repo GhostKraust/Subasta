@@ -10,8 +10,8 @@ const charts = {
   radar: echarts.init($("chart-radar"))
 };
 
-function lineSeries(style, data) {
-  const common = {
+function lineSeries(data) {
+  return {
     type: "line",
     data,
     smooth: true,
@@ -19,17 +19,9 @@ function lineSeries(style, data) {
     symbolSize: 6,
     lineStyle: { width: 2 }
   };
-
-  if (style === "area") {
-    common.areaStyle = { opacity: 0.12 };
-  } else if (style === "step") {
-    common.step = "middle";
-  }
-
-  return common;
 }
 
-function renderCharts(data, lineStyle) {
+function renderCharts(data) {
   if (!data) {
     return;
   }
@@ -49,17 +41,27 @@ function renderCharts(data, lineStyle) {
       axisLine: { show: false },
       splitLine: { lineStyle: { color: "#efe7e0" } }
     },
-    series: [lineSeries(lineStyle, data.bids)]
+    series: [lineSeries(data.bids)]
   });
 
   charts.bar.setOption({
     textStyle: baseText,
-    grid,
+    grid: { left: 36, right: 16, top: 24, bottom: 56 },
     xAxis: {
       type: "category",
       data: data.topProducts.map((p) => p.name),
       axisLine: { lineStyle: { color: "#e2dad3" } },
-      axisTick: { show: false }
+      axisTick: { show: false },
+      axisLabel: {
+        interval: 0,
+        rotate: 20,
+        formatter: (value) => {
+          if (!value) {
+            return "";
+          }
+          return value.length > 14 ? value.slice(0, 14) + "..." : value;
+        }
+      }
     },
     yAxis: {
       type: "value",
@@ -110,8 +112,7 @@ function updateStats(data) {
   const bidderName = $("top-bidder-name");
   const bidderTotal = $("top-bidder-total");
   const bidderCount = $("top-bidder-count");
-  const productName = $("top-product-name");
-  const productCount = $("top-product-count");
+  const productList = $("top-product-list");
 
   if (bidderName) {
     bidderName.textContent = data.topBidder.name || "-";
@@ -122,16 +123,27 @@ function updateStats(data) {
   if (bidderCount) {
     bidderCount.textContent = (data.topBidder.count || 0) + " pujas";
   }
-  if (productName) {
-    productName.textContent = data.topProduct.name || "-";
-  }
-  if (productCount) {
-    productCount.textContent = (data.topProduct.count || 0) + " pujas";
+  if (productList) {
+    productList.innerHTML = "";
+    const items = Array.isArray(data.topProduct) ? data.topProduct : [];
+    if (items.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = "-";
+      productList.appendChild(li);
+    } else {
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        const name = item && item.name ? item.name : "-";
+        const count = item && item.count ? item.count : 0;
+        li.textContent = name + " - " + count + " pujas";
+        productList.appendChild(li);
+      });
+    }
   }
 }
 
-async function fetchData(rangeKey, fromDate, toDate) {
-  const params = new URLSearchParams({ data: "1", range: rangeKey });
+async function fetchData(fromDate, toDate) {
+  const params = new URLSearchParams({ data: "1" });
   if (fromDate) {
     params.set("from", fromDate);
   }
@@ -148,15 +160,12 @@ async function fetchData(rangeKey, fromDate, toDate) {
 }
 
 function initFilters() {
-  const range = $("filter-range");
-  const style = $("filter-line-style");
   const from = $("filter-from");
   const to = $("filter-to");
 
   const update = async () => {
     try {
       const data = await fetchData(
-        range.value,
         from && from.value ? from.value : "",
         to && to.value ? to.value : ""
       );
@@ -166,15 +175,12 @@ function initFilters() {
       if (to && data.to) {
         to.value = data.to;
       }
-      renderCharts(data, style.value);
+      renderCharts(data);
       updateStats(data);
     } catch (error) {
       console.error(error);
     }
   };
-
-  range.addEventListener("change", update);
-  style.addEventListener("change", update);
   if (from) {
     from.addEventListener("change", update);
   }
