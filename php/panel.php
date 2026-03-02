@@ -277,7 +277,13 @@ if ($resultAdmins) {
         </form>
 
         <section class="auth-card admin-products">
-            <h2 class="section-title">Productos existentes</h2>
+                <div class="section-header">
+                <h2 class="section-title">Productos existentes</h2>
+                <div class="action-row">
+                    <a class="btn btn-small btn-outline" href="export_productos.php?format=excel">Exportar Excel</a>
+                    <a class="btn btn-small btn-outline" href="export_productos.php?format=pdf" target="_blank" rel="noopener">Exportar PDF</a>
+                </div>
+            </div>
             <div class="table-wrap">
                 <table class="admin-table">
                     <thead>

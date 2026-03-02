@@ -353,6 +353,15 @@ h1 {
     font-size: 1.4rem;
 }
 
+.section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
 .table-wrap {
     overflow-x: auto;
 }

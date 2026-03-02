@@ -65,6 +65,8 @@ if ($result) {
             </div>
         </div>
         <div class="dash-actions">
+            <a class="btn ghost" href="export_ganadores.php?format=excel">Exportar Excel</a>
+            <a class="btn ghost" href="export_ganadores.php?format=pdf" target="_blank" rel="noopener">Exportar PDF</a>
             <a class="btn ghost" href="dashboard.php">Volver al dashboard</a>
             <a class="btn" href="panel.php">Panel</a>
         </div>
