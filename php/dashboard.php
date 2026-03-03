@@ -110,7 +110,7 @@ if ($resultPujas) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="../css/style.css" rel="stylesheet" />
-    <link href="../css/dashboard.css" rel="stylesheet" />
+    <link href="../css/dashboard.css?v=20260303" rel="stylesheet" />
 </head>
 <body class="auth-page">
     <header class="dash-header">

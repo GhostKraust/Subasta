@@ -1,42 +1,189 @@
+/* los colores de los iconos*/
+:root {
+    --pasitos-pink: #f78da7;
+    --pasitos-dark-pink: #d66a85;
+    --pasitos-blue: #0a8dd8;
+}
+
 body {
-    font-family: "Outfit", sans-serif;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
 }
-
-.nav-item {
+/*la barra superior*/
+.top-bar {
+    background-color: var(--pasitos-pink);
+    height: 70px;
+    font-size: 18px;
+    padding-top: px;
+    padding-bottom: 28px;
     position: relative;
+    z-index: 2;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+}
+/* lo del numero que esta en la parte izquierda de la barra superior*/
+.top-bar .fw-bold {
+    font-size: 1.4rem;
+    font-weight: 1500;
+    color: #000000;
+    width: 400px;
+}
+/*tamaño de los iconos de la parte derecha de la barra superior*/
+.top-icon {
+    background-color: var(--pasitos-blue);
+    color: #ffffff;
+    width: 29px;
+    height: 29px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.nav-item::after {
+.top-icon:hover {
+    background-color: #ff1bbb;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.nav-link {
+    color: #111111 !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover {
+    color: var(--pasitos-pink) !important;
+}
+
+.navbar {
+    position: relative;
+    z-index: 1;
+}
+
+.navbar-nav .nav-link.active {
+    position: relative;
+    color: #111111 !important;
+}
+/*esta parte es la linea que aparece debajo del link activo en la barra de navegacion*/
+.navbar-nav .nav-link.active::after {
     content: "";
     position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: -4px;
-    left: 0;
-    background-color: #ff91af;
-    transition: width 0.3s ease;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: -0.35rem;
+    height: 3px;
+    background-color: #e96cff;
+    border-radius: 2px;
 }
 
-.nav-item:hover::after {
-    width: 100%;
+@media (min-width: 992px) {
+    .navbar .container-fluid {
+        flex-wrap: nowrap;
+    }
+
+    .navbar-collapse {
+        flex-wrap: nowrap;
+    }
+
+    .navbar-nav {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 1.25rem;
+        white-space: nowrap;
+    }
+
+    .navbar-nav .nav-item {
+        white-space: nowrap;
+    }
+}
+/*la parte del logo en el footer*/
+.nav-flag {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+/*la parte del logo en el footer*/
+.nav-flag img {
+    display: block;
+    width: 20px;
+    height: auto;
 }
 
+.btn-donar {
+    background-color: var(--pasitos-pink);
+    color: #000000;
+    border: none;
+    transition: 0.3s;
+}
+/*la parte de los botones de donar*/
+.btn-donar:hover {
+    background-color: var(--pasitos-dark-pink);
+    color: #ffffff;
+}
+/*la parte de los botones de donar*/
+.footer-pink {
+    background-color: var(--pasitos-pink);
+    color: #ffffff;
+}
+/*los links de la parte del footer*/
+.footer-links a {
+    text-decoration: none;
+    color: #666666;
+    transition: 0.3s;
+}
+/*los links de la parte del footer*/
+.footer-links a:hover {
+    color: var(--pasitos-pink);
+}
+/*los botones de suscribirse*/
+.btn-subscribe {
+    color: var(--pasitos-pink);
+    background-color: #ffffff;
+    border: none;
+    font-weight: 700;
+    padding: 10px 30px;
+}
+/*los botones de suscribirse*/
+.logo-pasitos {
+    height: 70px;
+    width: auto;
+}
+/*la barra superior*/
+.navbar-brand img {
+    height: 75px;
+    width: auto;
+}
+/*la parte del logo en el footer*/
+.navbar-brand img + img {
+    height: 55px;
+}
+/*la parte del logo en el footer*/
+.footer-pink img {
+    height: 80px;
+    width: auto;
+}
+/*estilo de las letras en cursiva*/
+.italic {
+    font-style: italic;
+}
+/*estilo de las cartas de las subastas*/
 .auction-card:hover {
     transform: translateY(-5px);
     transition: transform 0.3s ease;
 }
-
+/*estilo de las cartas de las subastas*/
 .currency-stack {
     display: grid;
     gap: 4px;
     font-weight: 700;
     font-size: 1rem;
 }
-
+/*estilo de las cartas de las subastas*/
 .currency-line {
     white-space: nowrap;
 }
-
+/*estilo de las cartas de las subastas*/
 .currency-muted {
     margin-top: 6px;
     font-weight: 600;
