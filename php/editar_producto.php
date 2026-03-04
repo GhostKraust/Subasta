@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 
 $id = (int) ($_GET["id"] ?? 0);
@@ -150,6 +151,7 @@ if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
                     <span>Estado</span>
                     <select name="estado" required>
                         <option value="activo" <?php echo ($producto["estado"] ?? "") === "activo" ? "selected" : ""; ?>>Activo</option>
+                        <option value="pausado" <?php echo ($producto["estado"] ?? "") === "pausado" ? "selected" : ""; ?>>Pausado</option>
                         <option value="finalizado" <?php echo ($producto["estado"] ?? "") === "finalizado" ? "selected" : ""; ?>>Finalizado</option>
                     </select>
                 </label>

@@ -1,12 +1,19 @@
 :root {
-    --bg: #f4efe5;
-    --bg-soft: #fdf7ef;
-    --ink: #2a2722;
-    --muted: #6b655c;
-    --accent: #7a946d;
-    --accent-2: #cbb992;
-    --line: rgba(42, 39, 34, 0.16);
-    --shadow: 0 24px 60px rgba(41, 35, 26, 0.16);
+    --bg: #f7ecf3;
+    --bg-soft: #fff7fb;
+    --ink: #1f2a3a;
+    --muted: #6b7280;
+    --accent: #6f8fe8;
+    --accent-2: #f5a3c7;
+    --line: rgba(124, 137, 158, 0.16);
+    --shadow: 0 20px 40px rgba(150, 120, 145, 0.18);
+}
+
+body.auth-page {
+    background: radial-gradient(circle at 12% 18%, rgba(248, 205, 224, 0.5), transparent 45%),
+        radial-gradient(circle at 88% 12%, rgba(186, 209, 250, 0.45), transparent 50%),
+        linear-gradient(180deg, #fbe8f2 0%, #f7edf4 40%, #f2e9f1 100%);
+    color: var(--ink);
 }
 
 .dash-header {
@@ -16,7 +23,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
+}
+
+.brand-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #6c88ea, #8fb0ff);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.brand-name {
+    font-size: 1.15rem;
+}
+
+.brand-tag {
+    color: #9aa0aa;
 }
 
 .dash-title {
@@ -31,10 +55,29 @@
     flex-wrap: wrap;
 }
 
+.dash-actions .btn.btn-compact {
+    min-width: 170px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    justify-content: center;
+}
+
+.btn {
+    background: linear-gradient(135deg, #6c88ea, #86a7ff);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 12px 24px rgba(108, 136, 234, 0.25);
+}
+
+.btn:hover {
+    box-shadow: 0 16px 28px rgba(108, 136, 234, 0.3);
+}
+
 .btn.ghost {
-    background: transparent;
-    border-color: var(--line);
-    color: var(--ink);
+    background: #ffffff;
+    border: 1px solid #e5e9f2;
+    color: #4b5563;
+    box-shadow: 0 10px 20px rgba(165, 175, 196, 0.15);
 }
 
 .dashboard {
@@ -52,9 +95,9 @@
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid var(--line);
-    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(233, 200, 220, 0.6);
+    border-radius: 26px;
     padding: 24px;
     box-shadow: var(--shadow);
     display: grid;
@@ -64,6 +107,7 @@
 .card-title {
     font-weight: 700;
     font-size: 1.05rem;
+    color: #2f3a4f;
 }
 
 .chart {
@@ -81,7 +125,7 @@
 }
 
 .bar-track {
-    background: rgba(122, 148, 109, 0.15);
+    background: rgba(245, 163, 199, 0.35);
     border-radius: 999px;
     height: 10px;
     overflow: hidden;
@@ -89,7 +133,7 @@
 
 .bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), #98b18b);
+    background: linear-gradient(90deg, #f5a3c7, #f7c0d9);
     border-radius: 999px;
 }
 
@@ -130,9 +174,58 @@
     gap: 12px;
     padding: 10px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid var(--line);
+    background: #ffffff;
+    border: 1px solid rgba(229, 233, 242, 0.9);
     font-size: 0.95rem;
+}
+
+.filter-form {
+    display: grid;
+    gap: 16px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.stat-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.stat-empty {
+    color: #7a7a7a;
+}
+
+.stat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.stat-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #f7f1ec;
 }
 
 .pill-row {
@@ -144,9 +237,9 @@
 .pill {
     padding: 8px 14px;
     border-radius: 999px;
-    background: rgba(122, 148, 109, 0.15);
+    background: rgba(108, 136, 234, 0.15);
     font-weight: 600;
-    color: var(--ink);
+    color: #2f3a4f;
 }
 
 .table {
@@ -161,8 +254,8 @@
     gap: 12px;
     padding: 10px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid var(--line);
+    background: #ffffff;
+    border: 1px solid rgba(229, 233, 242, 0.9);
 }
 
 .table .row.head {

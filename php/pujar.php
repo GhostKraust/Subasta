@@ -12,6 +12,8 @@ $correo = trim($_POST["correo_usuario"] ?? "");
 $telefono = trim($_POST["telefono_usuario"] ?? "");
 $monto = (float) ($_POST["monto_puja"] ?? 0);
 $categoriaFiltro = (int) ($_POST["categoria"] ?? 0);
+$ordenFiltro = trim($_POST["orden"] ?? "");
+$busqueda = trim($_POST["q"] ?? "");
 
 if ($productoId <= 0 || $nombre === "" || $correo === "" || $telefono === "" || $monto <= 0) {
     header("Location: producto.php?id=" . $productoId . "&status=error");
@@ -116,6 +118,12 @@ $stmtInsert->close();
 $redirect = "producto.php?id=" . $productoId . "&status=ok";
 if ($categoriaFiltro > 0) {
     $redirect .= "&categoria=" . $categoriaFiltro;
+}
+if ($ordenFiltro !== "") {
+    $redirect .= "&orden=" . urlencode($ordenFiltro);
+}
+if ($busqueda !== "") {
+    $redirect .= "&q=" . urlencode($busqueda);
 }
 header("Location: " . $redirect);
 exit;

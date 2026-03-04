@@ -4,6 +4,12 @@ require_once __DIR__ . "/../config/db.php";
 session_start();
 
 $error = "";
+$hasRole = false;
+$checkRole = $mysqli->query("SHOW COLUMNS FROM admin LIKE 'rol'");
+if ($checkRole && $checkRole->num_rows > 0) {
+    $hasRole = true;
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $usuario = trim($_POST["usuario"] ?? "");
     $contrasena = $_POST["contrasena"] ?? "";
@@ -11,7 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($usuario === "" || $contrasena === "") {
         $error = "Completa usuario y contrasena.";
     } else {
-        $stmt = $mysqli->prepare("SELECT id, password FROM admin WHERE usuario = ? LIMIT 1");
+        $selectRole = $hasRole ? ", rol" : "";
+        $stmt = $mysqli->prepare("SELECT id, password$selectRole FROM admin WHERE usuario = ? LIMIT 1");
         if ($stmt) {
             $stmt->bind_param("s", $usuario);
             $stmt->execute();
@@ -26,9 +33,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             if ($admin && $isValid) {
+                $role = "admin";
+                if ($hasRole) {
+                    $role = strtolower(trim($admin["rol"] ?? "admin"));
+                    if (!in_array($role, ["admin", "operativo"], true)) {
+                        $role = "admin";
+                    }
+                }
                 $_SESSION["admin_id"] = $admin["id"];
                 $_SESSION["admin_user"] = $usuario;
-                header("Location: dashboard.php");
+                $_SESSION["admin_role"] = $role;
+                $target = $role === "admin" ? "dashboard.php" : "panel.php";
+                header("Location: " . $target);
                 exit;
             }
         }

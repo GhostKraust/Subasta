@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 
 $id = (int) ($_POST["id"] ?? 0);

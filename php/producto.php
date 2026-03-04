@@ -3,6 +3,8 @@ require_once __DIR__ . "/../config/db.php";
 
 $id = (int) ($_GET["id"] ?? 0);
 $categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
+$ordenFiltro = trim($_GET["orden"] ?? "");
+$busqueda = trim($_GET["q"] ?? "");
 $status = trim($_GET["status"] ?? "");
 
 if ($id <= 0) {
@@ -89,6 +91,24 @@ $ahora = new DateTime();
 $activoTiempo = ($inicio === null || $ahora >= $inicio) && ($fin === null || $ahora <= $fin);
 $estadoActual = ($producto["estado"] ?? "activo") === "activo" && $activoTiempo;
 
+$cierreTexto = "";
+$restanteTexto = "";
+if ($fin !== null) {
+    $cierreTexto = $fin->format("d/m/Y H:i");
+    $secondsLeft = $fin->getTimestamp() - $ahora->getTimestamp();
+    if ($secondsLeft > 0) {
+        if ($secondsLeft < 3600) {
+            $restanteTexto = "Menos de 1 hora";
+        } elseif ($secondsLeft <= 86400) {
+            $hoursLeft = (int) ceil($secondsLeft / 3600);
+            $restanteTexto = "Faltan " . $hoursLeft . " horas";
+        } else {
+            $daysLeft = (int) ceil($secondsLeft / 86400);
+            $restanteTexto = "Faltan " . $daysLeft . " dias";
+        }
+    }
+}
+
 $pujas = [];
 $selectOrigen = $hasOrigen ? ", origen" : "";
 $stmtPujas = $mysqli->prepare("SELECT nombre_usuario, monto_puja, fecha_puja$selectOrigen FROM pujas WHERE producto_id = ? ORDER BY fecha_puja DESC LIMIT 20");
@@ -108,8 +128,18 @@ if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
 }
 
 $volver = "subasta.php";
+$volverParams = [];
 if ($categoriaFiltro > 0) {
-    $volver .= "?categoria=" . $categoriaFiltro;
+    $volverParams[] = "categoria=" . $categoriaFiltro;
+}
+if ($ordenFiltro !== "") {
+    $volverParams[] = "orden=" . urlencode($ordenFiltro);
+}
+if ($busqueda !== "") {
+    $volverParams[] = "q=" . urlencode($busqueda);
+}
+if (count($volverParams) > 0) {
+    $volver .= "?" . implode("&", $volverParams);
 }
 ?>
 <!DOCTYPE html>
@@ -185,10 +215,25 @@ if ($categoriaFiltro > 0) {
                             <div class="text-lg font-semibold text-slate-700 dark:text-slate-200">$<?php echo number_format($minimo, 2); ?></div>
                         </div>
                     <?php } ?>
+                    <?php if ($estadoActual && $cierreTexto !== "") { ?>
+                        <div>
+                            <div class="text-xs uppercase text-slate-400 font-semibold">Cierre</div>
+                            <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                <?php echo htmlspecialchars($cierreTexto); ?>
+                            </div>
+                            <?php if ($restanteTexto !== "") { ?>
+                                <div class="text-xs text-slate-500">
+                                    <?php echo htmlspecialchars($restanteTexto); ?>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    <?php } ?>
                 </div>
                 <?php if (!$estadoActual) { ?>
                     <div class="bg-slate-100 dark:bg-slate-800/60 text-slate-500 rounded-2xl px-4 py-3 text-sm">
-                        <?php if ($fin !== null && $ahora > $fin) { ?>
+                        <?php if (($producto["estado"] ?? "") === "pausado") { ?>
+                            Esta subasta esta pausada.
+                        <?php } elseif ($fin !== null && $ahora > $fin) { ?>
                             Esta subasta esta finalizada.
                         <?php } elseif ($inicio !== null && $ahora < $inicio) { ?>
                             Esta subasta inicia el <?php echo htmlspecialchars($inicio->format("d/m/Y H:i")); ?>.
@@ -207,7 +252,7 @@ if ($categoriaFiltro > 0) {
             </div>
             <?php if ($status === "ok") { ?>
                 <div class="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl px-4 py-3">
-                    Tu puja fue registrada correctamente.
+                    Tu oferta sea realizado
                 </div>
             <?php } elseif ($status === "error") { ?>
                 <div class="bg-rose-50 text-rose-700 border border-rose-200 rounded-2xl px-4 py-3">
@@ -218,6 +263,8 @@ if ($categoriaFiltro > 0) {
                 <form class="grid gap-3" action="pujar.php" method="post">
                     <input type="hidden" name="producto_id" value="<?php echo (int) $producto["id"]; ?>" />
                     <input type="hidden" name="categoria" value="<?php echo (int) $categoriaFiltro; ?>" />
+                    <input type="hidden" name="orden" value="<?php echo htmlspecialchars($ordenFiltro); ?>" />
+                    <input type="hidden" name="q" value="<?php echo htmlspecialchars($busqueda); ?>" />
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />

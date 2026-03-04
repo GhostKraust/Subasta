@@ -37,6 +37,12 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasRole = false;
+$checkRole = $mysqli->query("SHOW COLUMNS FROM admin LIKE 'rol'");
+if ($checkRole && $checkRole->num_rows > 0) {
+    $hasRole = true;
+}
+
 $monedas = ["MXN", "USD", "CAD"];
 $moneda = strtoupper($_GET["moneda"] ?? "MXN");
 if (!in_array($moneda, $monedas, true)) {
@@ -124,6 +130,99 @@ if (count($productos) > 0) {
 $admins = [];
 $currentAdminId = (int) ($_SESSION["admin_id"] ?? 0);
 $staffStatus = trim($_GET["staff"] ?? "");
+$estadoStatus = trim($_GET["estado"] ?? "");
+$isAdmin = is_admin();
+$toast = null;
+
+if (!empty($_GET["ok"])) {
+    $toast = [
+        "title" => "Productos",
+        "body" => "Producto guardado correctamente.",
+        "variant" => "success"
+    ];
+} elseif (!empty($_GET["deleted"])) {
+    $toast = [
+        "title" => "Productos",
+        "body" => "Producto eliminado correctamente.",
+        "variant" => "danger"
+    ];
+} elseif (!empty($_GET["updated"])) {
+    $toast = [
+        "title" => "Productos",
+        "body" => "Producto actualizado correctamente.",
+        "variant" => "success"
+    ];
+} elseif (!empty($_GET["presencial"])) {
+    $toast = [
+        "title" => "Pujas",
+        "body" => "Puja presencial registrada correctamente.",
+        "variant" => "success"
+    ];
+} elseif ($staffStatus !== "") {
+    if ($staffStatus === "created") {
+        $toast = [
+            "title" => "Personal",
+            "body" => "Personal agregado correctamente.",
+            "variant" => "success"
+        ];
+    } elseif ($staffStatus === "updated") {
+        $toast = [
+            "title" => "Personal",
+            "body" => "Personal actualizado correctamente.",
+            "variant" => "success"
+        ];
+    } elseif ($staffStatus === "deleted") {
+        $toast = [
+            "title" => "Personal",
+            "body" => "Personal eliminado correctamente.",
+            "variant" => "warning"
+        ];
+    } elseif ($staffStatus === "exists") {
+        $toast = [
+            "title" => "Personal",
+            "body" => "Ese usuario ya existe. Usa otro nombre.",
+            "variant" => "warning"
+        ];
+    } elseif ($staffStatus === "self") {
+        $toast = [
+            "title" => "Personal",
+            "body" => "No puedes eliminar tu propio acceso.",
+            "variant" => "warning"
+        ];
+    } else {
+        $toast = [
+            "title" => "Personal",
+            "body" => "No se pudo completar la accion. Intenta de nuevo.",
+            "variant" => "danger"
+        ];
+    }
+} elseif ($estadoStatus !== "") {
+    if ($estadoStatus === "pausado") {
+        $toast = [
+            "title" => "Productos",
+            "body" => "Producto pausado correctamente.",
+            "variant" => "warning"
+        ];
+    } elseif ($estadoStatus === "activo") {
+        $toast = [
+            "title" => "Productos",
+            "body" => "Producto reanudado correctamente.",
+            "variant" => "success"
+        ];
+    } elseif ($estadoStatus === "finalizado") {
+        $toast = [
+            "title" => "Productos",
+            "body" => "No puedes pausar un producto finalizado.",
+            "variant" => "warning"
+        ];
+    } else {
+        $toast = [
+            "title" => "Productos",
+            "body" => "No se pudo actualizar el estado.",
+            "variant" => "danger"
+        ];
+    }
+}
 $resultAdmins = $mysqli->query("SELECT id, usuario FROM admin ORDER BY id DESC");
 if ($resultAdmins) {
     while ($row = $resultAdmins->fetch_assoc()) {
@@ -140,10 +239,32 @@ if ($resultAdmins) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../css/style.css" rel="stylesheet" />
 </head>
 <body class="auth-page">
+    <?php if ($toast) { ?>
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="statusToast" class="toast toast-pink" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
+                <div class="toast-header">
+                    <strong class="me-auto">Pasistos de luz</strong>
+                    <small>Ahora</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Tu oferta sea realizado
+                </div>
+            </div>
+        </div>
+    <?php } ?>
     <main class="auth admin-layout">
+        <div class="panel-actions">
+            <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
+            <?php if ($isAdmin) { ?>
+                <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
+                <a class="btn btn-compact" href="dashboard.php">Ir al dashboard</a>
+            <?php } ?>
+        </div>
         <form class="currency-bar" method="get">
             <label class="currency-label" for="moneda-select">Moneda</label>
             <select id="moneda-select" name="moneda" onchange="this.form.submit()">
@@ -156,7 +277,13 @@ if ($resultAdmins) {
         </form>
 
         <section class="auth-card admin-products">
-            <h2 class="section-title">Productos existentes</h2>
+                <div class="section-header">
+                <h2 class="section-title">Productos existentes</h2>
+                <div class="action-row">
+                    <a class="btn btn-small btn-outline" href="export_productos.php?format=excel">Exportar Excel</a>
+                    <a class="btn btn-small btn-outline" href="export_productos.php?format=pdf" target="_blank" rel="noopener">Exportar PDF</a>
+                </div>
+            </div>
             <div class="table-wrap">
                 <table class="admin-table">
                     <thead>
@@ -242,75 +369,27 @@ if ($resultAdmins) {
                                     </td>
                                     <td>
                                         <div class="action-row">
-                                            <a class="btn btn-small btn-outline" href="editar_producto.php?id=<?php echo (int) $producto["id"]; ?>">Editar</a>
-                                            <form action="eliminar_producto.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este producto?');">
-                                                <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
-                                                <button class="btn btn-small" type="submit">Eliminar</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php } ?>
-                        <?php } ?>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="auth-card admin-staff">
-            <h2 class="section-title">Personal administrativo</h2>
-            <?php if ($staffStatus === "created") { ?>
-                <p class="lead">Personal agregado correctamente.</p>
-            <?php } elseif ($staffStatus === "updated") { ?>
-                <p class="lead">Personal actualizado correctamente.</p>
-            <?php } elseif ($staffStatus === "deleted") { ?>
-                <p class="lead">Personal eliminado correctamente.</p>
-            <?php } elseif ($staffStatus === "exists") { ?>
-                <p class="lead">Ese usuario ya existe. Usa otro nombre.</p>
-            <?php } elseif ($staffStatus === "self") { ?>
-                <p class="lead">No puedes eliminar tu propio acceso.</p>
-            <?php } elseif ($staffStatus === "error") { ?>
-                <p class="lead">No se pudo completar la accion. Intenta de nuevo.</p>
-            <?php } else { ?>
-                <p class="lead">Agrega, edita o elimina usuarios con acceso al panel.</p>
-            <?php } ?>
-            <form class="auth-form" action="guardar_personal.php" method="post">
-                <label class="field">
-                    <span>Usuario</span>
-                    <input name="usuario" type="text" required placeholder="Ej. admin2" />
-                </label>
-                <label class="field">
-                    <span>Contrasena</span>
-                    <input name="contrasena" type="password" required placeholder="********" />
-                </label>
-                <button class="btn" type="submit">Agregar personal</button>
-            </form>
-            <div class="table-wrap">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (count($admins) === 0) { ?>
-                            <tr>
-                                <td colspan="2">No hay personal registrado.</td>
-                            </tr>
-                        <?php } else { ?>
-                            <?php foreach ($admins as $admin) { ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($admin["usuario"] ?? ""); ?></td>
-                                    <td>
-                                        <div class="action-row">
-                                            <a class="btn btn-small btn-outline" href="editar_personal.php?id=<?php echo (int) $admin["id"]; ?>">Editar</a>
-                                            <form action="eliminar_personal.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este usuario?');">
-                                                <input type="hidden" name="id" value="<?php echo (int) $admin["id"]; ?>" />
-                                                <button class="btn btn-small" type="submit" <?php echo ((int) $admin["id"]) === $currentAdminId ? "disabled" : ""; ?>>Eliminar</button>
-                                            </form>
-                                            <?php if ((int) $admin["id"] === $currentAdminId) { ?>
-                                                <span class="field-hint">No puedes eliminar tu usuario.</span>
+                                            <?php if ($isAdmin) { ?>
+                                                <?php if (($producto["estado"] ?? "") === "activo") { ?>
+                                                    <form action="cambiar_estado_producto.php" method="post" onsubmit="return confirm('Quieres pausar este producto?');">
+                                                        <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
+                                                        <input type="hidden" name="estado" value="pausado" />
+                                                        <button class="btn btn-small btn-outline" type="submit">Pausar</button>
+                                                    </form>
+                                                <?php } elseif (($producto["estado"] ?? "") === "pausado") { ?>
+                                                    <form action="cambiar_estado_producto.php" method="post" onsubmit="return confirm('Quieres reanudar este producto?');">
+                                                        <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
+                                                        <input type="hidden" name="estado" value="activo" />
+                                                        <button class="btn btn-small btn-outline" type="submit">Reanudar</button>
+                                                    </form>
+                                                <?php } ?>
+                                                <a class="btn btn-small btn-outline" href="editar_producto.php?id=<?php echo (int) $producto["id"]; ?>">Editar</a>
+                                                <form action="eliminar_producto.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este producto?');">
+                                                    <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
+                                                    <button class="btn btn-small" type="submit">Eliminar</button>
+                                                </form>
+                                            <?php } else { ?>
+                                                <span class="field-hint">Solo admin</span>
                                             <?php } ?>
                                         </div>
                                     </td>
@@ -321,6 +400,68 @@ if ($resultAdmins) {
                 </table>
             </div>
         </section>
+
+        <?php if ($isAdmin) { ?>
+            <section class="auth-card admin-staff">
+                <h2 class="section-title">Personal administrativo</h2>
+                <p class="lead">Agrega, edita o elimina usuarios con acceso al panel.</p>
+                <form class="auth-form" action="guardar_personal.php" method="post">
+                    <label class="field">
+                        <span>Usuario</span>
+                        <input name="usuario" type="text" required placeholder="Ej. admin2" />
+                    </label>
+                    <label class="field">
+                        <span>Contrasena</span>
+                        <input name="contrasena" type="password" required placeholder="********" />
+                    </label>
+                    <?php if ($hasRole) { ?>
+                        <label class="field">
+                            <span>Rol</span>
+                            <select name="rol" required>
+                                <option value="admin">Administrador</option>
+                                <option value="operativo" selected>Operativo</option>
+                            </select>
+                        </label>
+                    <?php } ?>
+                    <button class="btn" type="submit">Agregar personal</button>
+                </form>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($admins) === 0) { ?>
+                                <tr>
+                                    <td colspan="2">No hay personal registrado.</td>
+                                </tr>
+                            <?php } else { ?>
+                                <?php foreach ($admins as $admin) { ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($admin["usuario"] ?? ""); ?></td>
+                                        <td>
+                                            <div class="action-row">
+                                                <a class="btn btn-small btn-outline" href="editar_personal.php?id=<?php echo (int) $admin["id"]; ?>">Editar</a>
+                                                <form action="eliminar_personal.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este usuario?');">
+                                                    <input type="hidden" name="id" value="<?php echo (int) $admin["id"]; ?>" />
+                                                    <button class="btn btn-small" type="submit" <?php echo ((int) $admin["id"]) === $currentAdminId ? "disabled" : ""; ?>>Eliminar</button>
+                                                </form>
+                                                <?php if ((int) $admin["id"] === $currentAdminId) { ?>
+                                                    <span class="field-hint">No puedes eliminar tu usuario.</span>
+                                                <?php } ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        <?php } ?>
 
         <section class="auth-card admin-presencial">
             <h2 class="section-title">Registrar puja presencial</h2>
@@ -388,17 +529,7 @@ if ($resultAdmins) {
                 </div>
             </div>
             <h1>Nuevo producto</h1>
-            <?php if (!empty($_GET["ok"])) { ?>
-                <p class="lead">Producto guardado correctamente.</p>
-            <?php } elseif (!empty($_GET["deleted"])) { ?>
-                <p class="lead">Producto eliminado correctamente.</p>
-            <?php } elseif (!empty($_GET["updated"])) { ?>
-                <p class="lead">Producto actualizado correctamente.</p>
-            <?php } elseif (!empty($_GET["presencial"])) { ?>
-                <p class="lead">Puja presencial registrada correctamente.</p>
-            <?php } else { ?>
-                <p class="lead">Completa los datos para publicar una nueva subasta.</p>
-            <?php } ?>
+            <p class="lead">Completa los datos para publicar una nueva subasta.</p>
             <form class="auth-form" action="guardar_producto.php" method="post" enctype="multipart/form-data">
                 <label class="field">
                     <span>Nombre del producto</span>
@@ -450,14 +581,20 @@ if ($resultAdmins) {
                 <button class="btn" type="submit">Guardar producto</button>
             </form>
             <div class="switch">
-                <a class="link" href="dashboard.php">Ir al dashboard</a>
-                <span>·</span>
                 <a class="link" href="subasta.php">Volver a subasta</a>
             </div>
         </section>
 
 
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const toastEl = document.getElementById("statusToast");
+        if (toastEl) {
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
     <script>
         (function () {
             var searchInput = document.getElementById("presencial-search");

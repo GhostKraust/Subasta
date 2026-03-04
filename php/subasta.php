@@ -74,6 +74,8 @@ function formatCurrency($amountMXN, $currency, $rates)
 }
 
 $categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
+$ordenFiltro = trim($_GET["orden"] ?? "");
+$busqueda = trim($_GET["q"] ?? "");
 $status = trim($_GET["status"] ?? "");
 
 $productos = [];
@@ -87,7 +89,21 @@ if ($hasFin) {
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
-$queryProductos .= " ORDER BY p.id DESC";
+if ($busqueda !== "") {
+    $safeSearch = $mysqli->real_escape_string($busqueda);
+    $queryProductos .= " AND (p.nombre LIKE '%" . $safeSearch . "%' OR p.descripcion LIKE '%" . $safeSearch . "%')";
+}
+
+$orderClause = " ORDER BY p.id DESC";
+if ($ordenFiltro === "precio_asc") {
+    $orderClause = " ORDER BY COALESCE(pu.max_puja, p.$precioColumn) ASC, p.id DESC";
+} elseif ($ordenFiltro === "precio_desc") {
+    $orderClause = " ORDER BY COALESCE(pu.max_puja, p.$precioColumn) DESC, p.id DESC";
+} elseif ($ordenFiltro === "fin" && $hasFin) {
+    $orderClause = " ORDER BY (p.fecha_fin IS NULL), p.fecha_fin ASC, p.id DESC";
+}
+
+$queryProductos .= $orderClause;
 $resultProductos = $mysqli->query($queryProductos);
 if ($resultProductos) {
     while ($row = $resultProductos->fetch_assoc()) {
@@ -101,17 +117,19 @@ if ($resultProductos) {
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Charity Auction - Pasitos de Luz / Casa Connor</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-<link href="../css/subasta.css" rel="stylesheet"/>
+<link href="../css/subasta.css?v=20260303" rel="stylesheet"/>
 <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#FF91AF",
+                        primary: "#f78da7",
                         secondary: "#00B4FF",
                         "background-light": "#F8F9FA",
                         "background-dark": "#121212",
@@ -128,64 +146,62 @@ if ($resultProductos) {
     </script>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
-<div class="bg-primary text-white py-2 px-6 flex justify-between items-center text-sm font-medium">
-<div class="flex items-center gap-2">
-<span class="material-icons text-lg">phone</span>
-<span>Contáctanos: (+52 322 135 6302)</span>
-</div>
-<div class="flex items-center gap-3">
-<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
-<img alt="Phone" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxFK45cv0gaRJ0xZfuzT2Bwa3-JMqXwpo6c1aSAZEpwS6Qn3yAD_n3oxqefRhD8fu3YfdX5UbL9_UkS5-goiF3Y5xUu3m-GA0MX3LXtnKgeMAhvzdqNXJYRwRsQGI88Ntl_q-1wG_fi5MqsGLPbbG3seFXUmO4VT9oH8AWL5IP2k7Di97UQnG62KawAIzhhNPWCR2XSL3mGIacTHEQZiLOUYsSCvWowpx6qfMPL6PEuakqq0JWr9wSdDMUH68R18Z4jHplsE3Kdw"/>
-</a>
-<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
-<img alt="WhatsApp" class="w-4 h-4 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcoz0Fs0k8pbdKqr-zOgO4uyrQ5mQg45wNx5zH-kXHTJMPYw9WmKR9rskpONpsNpdZcddx8dQlcHKGR_EIh2ZZWJg-ySr67SOu_92x8aBpkeMCQ_NacvCuW8FaesN9jxpqCm2KL3CHFnRJv79X4ZyODEug3J0JvjT2iiXBPJ5SxfHe9ONmggul-vlvu-vr8PNWSwTSC5KztbOgbWqE6p8u9AbtXjI8bh99Ffa0o73MPKfHXqnRPh_7mVFxHSP1tm75JmoZ-0vUmQ"/>
-</a>
-<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
-<span class="material-icons text-base">location_on</span>
-</a>
-<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
-<span class="material-icons text-base">facebook</span>
-</a>
-<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
-<img alt="Instagram" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNKJ4nyRBz5Y6Od4tNvjINNEYQvla18pf7WhlWdXeX2n2kIAcS_cVIWgLTypG7jJqXjBWK45Gzs0jSX-TGlh2uklBVZNCNIGAESIxvDliJ4dLh40bjaLQ6P5hSCAm5eyqd1gBGL-WoThj0XDtIJpsfxbEo5ND4CEbbJdJETOW5sw1nM0P6HQ8OY6qzprzan9b8P_2urNcc1utB3zNz2Pa-EW5HPC3TQDFLmSr6sN0eva7XY4H0yIXsrx9dV3zoTTfK3tft53jObA"/>
-</a>
-<a class="bg-secondary p-1.5 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity" href="#">
-<span class="material-icons text-base">play_circle_filled</span>
-</a>
-</div>
-</div>
-<header class="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-50">
-<div class="container mx-auto px-6 py-4 flex items-center justify-between">
-<div class="flex items-center gap-6">
-<div class="flex items-center gap-2">
-<img alt="Pasitos de Luz Logo" class="h-16" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJBgXL6W54AfQQBLrEdcbUPl23gcyBOIkv6x7ZaxvFtMPkqIpiS6C2ZwR3ibXnMl5AR6fWT5-HX3hTc3CIRXT6ABbcQK2jXn2l1EW9gcNuG2eGieN2PCY45FSbADypP9YjkbeEeG42QsF-ZnNlckv76qCFlmHFUzLOk0a7wA3iTKPbNeqzPSZjeqDWl_bKYDyfgbuVjfu6-bv4bjXQsEKVOfayOwCHzrMI-5H8-XTZDkC1VDNOQAbzzR6KAOsuxpuLWdr2bmo9GQ"/>
-<img alt="Casa Connor Logo" class="h-16" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6A6G-G67IViN5Qj5YTdPhmIDLmDu0mfHPTBr5jZqgnKT6WMMj0rC4S_u4wuFtPgMAM0tTdL2rrLp1e-ZXCTp6CkI143bR24dysrIpt0_8KVzzgBs9PJZXsviv_KRB2byA5wgSJ6CUb8sG0RAfEG8BJWstiHAo1LMJ8LrQwTs9weBZNfb7h53e9BfvkIdD1nG-EBAnzbKuKN-L_onEsV8UFuRxOu_MokwgJiE4DSv-tsBjYGxpDf8HgSJl6-BxozT2kRMAFH5kvQ"/>
-</div>
-<nav class="hidden lg:flex items-center gap-8 ml-8 font-semibold text-slate-700 dark:text-slate-300">
-<a class="nav-item text-primary" href="#">Home</a>
-<div class="nav-item flex items-center gap-1 cursor-pointer">About Us <span class="material-icons text-sm">expand_more</span></div>
-<div class="nav-item flex items-center gap-1 cursor-pointer">Our Services <span class="material-icons text-sm">expand_more</span></div>
-<a class="nav-item" href="#">Meet Our Kids</a>
-<div class="nav-item flex items-center gap-1 cursor-pointer">Donate <span class="material-icons text-sm">expand_more</span></div>
-<a class="nav-item" href="#">Campaigns</a>
-<a class="nav-item" href="#">Events</a>
-<div class="flex items-center gap-1 ml-4 border rounded px-2 py-1 border-slate-200 dark:border-slate-700">
-<span class="text-lg">🇲🇽</span>
-<span class="material-icons text-sm">expand_more</span>
-</div>
-</nav>
-</div>
-<button class="bg-primary hover:bg-[#ff7ca2] text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                DONATE <span class="material-icons text-base">favorite</span>
-</button>
-</div>
+<header>
+    <div class="top-bar py-2 text-white px-4 d-flex justify-content-between align-items-center">
+        <div class="fw-bold">
+            <i class="bi bi-telephone-fill me-2"></i> Contáctanos: (+52 322 135 6302)
+        </div>
+        <div class="d-flex gap-2 fs-5">
+            <a href="#" class="top-icon"><i class="bi bi-telephone"></i></a>
+            <a href="#" class="top-icon"><i class="bi bi-whatsapp"></i></a>
+            <a href="#" class="top-icon"><i class="bi bi-geo-alt-fill"></i></a>
+            <a href="#" class="top-icon"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="top-icon"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="top-icon"><i class="bi bi-youtube"></i></a>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../Imagenes/logo_pasitos-removebg-preview.png" alt="Pasitos de Luz" class="me-2 logo-pasitos">
+                <img src="../Imagenes/logo_casa_connor.png" alt="Casa Connor" height="55">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto fw-semibold" style="font-size: 0.95rem;">
+                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">About Us <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Our Services <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Meet Our Kids</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Donate <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Campaigns <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Other Ways to Help <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Contact us <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item d-flex align-items-center">
+                        <a class="nav-link nav-flag" href="#" aria-label="Mexico">
+                            <img src="https://flagcdn.com/w20/mx.png" alt="Mexico">
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-donar px-4 py-2 fw-bold shadow-sm">
+                        DONAR <i class="bi bi-heart-fill ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 </header>
 <section class="bg-slate-50 dark:bg-slate-800/50 py-12 px-6">
 <div class="container mx-auto text-center">
-<h1 class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">Charity Auction</h1>
+<h1 class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4"></h1>
 <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                Support our mission to provide therapeutic and educational services to children with disabilities. 
-                Bid on exclusive items and make a difference today.
             </p>
 </div>
 </section>
@@ -203,30 +219,29 @@ if ($resultProductos) {
 </div>
 <?php } ?>
 <div class="container mx-auto px-6 mt-8">
-<div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-<div class="flex items-center gap-4">
-<span class="font-medium text-slate-500">Filter by:</span>
-<form method="get">
-<select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
-<option value="0">Todas las categorias</option>
-<?php foreach ($categorias as $categoria) { ?>
-<option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
-<?php echo htmlspecialchars($categoria["nombre"]); ?>
-</option>
-<?php } ?>
-</select>
+<form method="get" class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+    <div class="flex items-center gap-4">
+        <span class="font-medium text-slate-500">Filter by:</span>
+        <select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+            <option value="0">Todas las categorias</option>
+            <?php foreach ($categorias as $categoria) { ?>
+                <option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
+                    <?php echo htmlspecialchars($categoria["nombre"]); ?>
+                </option>
+            <?php } ?>
+        </select>
+        <select name="orden" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+            <option value="">Ordenar</option>
+            <option value="precio_asc" <?php echo $ordenFiltro === "precio_asc" ? "selected" : ""; ?>>Price: Low to High</option>
+            <option value="precio_desc" <?php echo $ordenFiltro === "precio_desc" ? "selected" : ""; ?>>Price: High to Low</option>
+            <option value="fin" <?php echo $ordenFiltro === "fin" ? "selected" : ""; ?>>Ending Soon</option>
+        </select>
+    </div>
+    <div class="relative w-full md:w-64">
+        <input name="q" value="<?php echo htmlspecialchars($busqueda); ?>" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
+        <span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
+    </div>
 </form>
-<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary">
-<option>Price: Low to High</option>
-<option>Price: High to Low</option>
-<option>Ending Soon</option>
-</select>
-</div>
-<div class="relative w-full md:w-64">
-<input class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
-<span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
-</div>
-</div>
 </div>
 <main class="container mx-auto px-6 py-12">
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -235,6 +250,19 @@ if ($resultProductos) {
         Aun no hay productos activos en subasta.
     </div>
 <?php } else { ?>
+    <?php
+        $extraParams = [];
+        if ($categoriaFiltro > 0) {
+            $extraParams[] = "categoria=" . $categoriaFiltro;
+        }
+        if ($ordenFiltro !== "") {
+            $extraParams[] = "orden=" . urlencode($ordenFiltro);
+        }
+        if ($busqueda !== "") {
+            $extraParams[] = "q=" . urlencode($busqueda);
+        }
+        $extraQuery = count($extraParams) > 0 ? "&" . implode("&", $extraParams) : "";
+    ?>
     <?php foreach ($productos as $producto) { ?>
         <?php
             $img = $producto["imagen_url"] ?? "";
@@ -253,6 +281,7 @@ if ($resultProductos) {
             $activoTiempo = ($inicio === null || $ahora >= $inicio) && ($fin === null || $ahora <= $fin);
             $estadoActual = ($producto["estado"] ?? "activo") === "activo" && $activoTiempo;
             $statusBadge = "";
+            $tiempoRestanteTexto = "";
             if (!$estadoActual) {
                 if ($fin !== null && $ahora > $fin) {
                     $statusBadge = "Finalizado";
@@ -260,6 +289,19 @@ if ($resultProductos) {
                     $statusBadge = "Inicia pronto";
                 } else {
                     $statusBadge = "No disponible";
+                }
+            } elseif ($fin !== null) {
+                $secondsLeft = $fin->getTimestamp() - $ahora->getTimestamp();
+                if ($secondsLeft > 0) {
+                    if ($secondsLeft < 3600) {
+                        $tiempoRestanteTexto = "Menos de 1 hora";
+                    } elseif ($secondsLeft <= 86400) {
+                        $hoursLeft = (int) ceil($secondsLeft / 3600);
+                        $tiempoRestanteTexto = "Faltan " . $hoursLeft . " horas";
+                    } else {
+                        $daysLeft = (int) ceil($secondsLeft / 86400);
+                        $tiempoRestanteTexto = "Faltan " . $daysLeft . " dias";
+                    }
                 }
             }
         ?>
@@ -269,7 +311,12 @@ if ($resultProductos) {
                     <img alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>" class="w-full h-full object-cover" src="<?php echo htmlspecialchars($img); ?>"/>
                 <?php } ?>
                 <div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                    <?php echo htmlspecialchars($producto["categoria"] ?? ""); ?>
+                    <div><?php echo htmlspecialchars($producto["categoria"] ?? ""); ?></div>
+                    <?php if ($tiempoRestanteTexto !== "") { ?>
+                        <div class="text-[10px] font-semibold text-slate-500">
+                            <?php echo htmlspecialchars($tiempoRestanteTexto); ?>
+                        </div>
+                    <?php } ?>
                 </div>
                 <?php if ($statusBadge !== "") { ?>
                     <div class="absolute top-4 left-4 bg-slate-900/80 text-white px-3 py-1 rounded-full text-xs font-semibold">
@@ -295,8 +342,8 @@ if ($resultProductos) {
                             <?php } ?>
                         </div>
                     </div>
-                    <a class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" href="producto.php?id=<?php echo (int) $producto["id"]; ?>&categoria=<?php echo (int) $categoriaFiltro; ?>">
-                        <?php echo $estadoActual ? "Ver y pujar" : "Ver detalles"; ?>
+                    <a class="bg-[#f78da7] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#d66a85] hover:shadow-lg transition-all" href="producto.php?id=<?php echo (int) $producto["id"]; ?><?php echo $extraQuery; ?>">
+                        <?php echo $estadoActual ? "Pujar" : "Ver detalles"; ?>
                     </a>
                 </div>
             </div>
@@ -309,78 +356,78 @@ if ($resultProductos) {
                 Load More Items <span class="material-icons">refresh</span>
 </button>
 </div>
-</main>
-<footer class="mt-20">
-<div class="bg-primary text-white py-16 px-6">
-<div class="container mx-auto">
-<div class="flex flex-col items-center text-center mb-12">
-<div class="flex items-center gap-4 mb-8">
-<img alt="Pasitos Logo White" class="h-24 brightness-0 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGphVm7IzCYq_5-dzIVFl_wIMzK6Yit00A9lPZfnwHS66074IjXQMyJ-REWOE0823ArKK6S6PJxtqt-2XTFo0n5VXL5J-G6GKT2P0SC3FCZqhgXjcA7GN2mHjenPQJFlpIYti7rfdtGWgvwUkC72z5f-cfBqMKzwMSJyryYnN0gaFIuPpdlmFZ0G2ANT_2Kti6_P-c3Xr2EEDBYAI2c3FYnGxayTws_Z1K3WZUtQOnXbmaZ1abQmkzOg9xVlTp0E3dIa2oU1BYKA"/>
-<img alt="Casa Connor Logo White" class="h-24 brightness-0 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMwITLdcOitGrym8xTgXWALeE4DgxR4wyXiSyZFRif-t-KS-3Z0Xzvh0ji9CnlMDbJo2uvUytx6ZOY14SchHTIFghUa5Csx00DoQqc21yT8lZwg3D8ddKODASlMvX1MrULEAOO0xtAqO_V_LjuoctNjrPlpwoKFcmry6MjQc9m_EgAo2vy-KDnNEwnFzlfR6Y0o4dy_6yGud0goPr61Ny4t4AeuMpdUPICuhacVv1BptrNL-SoSpFQMqfTHgINkD99NLEORHlJ2g"/>
-</div>
-<p class="max-w-3xl text-lg opacity-90 leading-relaxed font-light">
-                        Pasitos de Luz is a civil association in Banderas Bay. It is a registered non-profit organization founded by mothers of disabled children to meet their therapeutic, psychological, nutritional, educational and basic needs.
-                    </p>
-<div class="mt-6 text-sm opacity-80">
-                        Boulevard Federacion | Nayarit, Mexico | C.P. 63737<br/>
-                        Tel: (+52) 322 135 6302 | info@pasitosdeluz.org
+    </main>
+    <footer>
+        <div class="footer-pink py-5">
+            <div class="container text-center">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6 mb-4">
+                        <div class="mb-4">
+                            <img src="../Imagenes/logos_blancos.png" alt="Logos" height="80">
+                        </div>
+                        <p class="px-lg-5 mb-4" style="font-size: 0.95rem; line-height: 1.6;">
+                            Pasitos de Luz es una asociación civil en Bahía de Banderas. Es una organización registrada sin fines de lucro fundada por madres de niños discapacitados para satisfacer sus necesidades terapéuticas, psicológicas, nutricionales, educativas y básicas.
+                        </p>
+                        <p class="small mb-1">Boulevard Federación | Nayarit, México | C.P. 63737</p>
+                        <p class="small">Tel: (+52) 322 135 6302 | info@pasitosdeluz.org</p>
                     </div>
-</div>
-<div class="flex flex-col items-center mb-12">
-<div class="flex items-center gap-3 mb-6">
-<span class="material-icons text-4xl">mark_as_unread</span>
-<h3 class="text-2xl font-bold tracking-tight uppercase">Join Our Newsletter</h3>
-</div>
-<div class="flex w-full max-w-md bg-white rounded-xl overflow-hidden shadow-xl">
-<input class="flex-grow px-6 py-4 text-slate-800 border-none focus:ring-0" placeholder="Enter your email" type="email"/>
-<button class="bg-slate-900 text-white px-8 font-bold uppercase text-sm hover:bg-slate-800 transition-colors">
-                            Subscribe
-                        </button>
-</div>
-<a class="mt-6 text-sm font-bold underline underline-offset-4 hover:opacity-80" href="#">PRIVACY POLICY</a>
-</div>
-<div class="flex justify-center gap-6 pb-8 border-b border-white/20">
-<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">phone</span></a>
-<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">chat</span></a>
-<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">location_on</span></a>
-<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">facebook</span></a>
-<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">camera_alt</span></a>
-<a class="hover:scale-110 transition-transform" href="#"><span class="material-icons">play_circle</span></a>
-</div>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-950 py-12 px-6">
-<div class="container mx-auto">
-<div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
-<div class="space-y-3">
-<a class="block hover:text-primary transition-colors" href="#">About Us</a>
-<a class="block hover:text-primary transition-colors" href="#">Pasitos de Luz History</a>
-<a class="block hover:text-primary transition-colors" href="#">Casa Connor</a>
-</div>
-<div class="space-y-3">
-<a class="block hover:text-primary transition-colors" href="#">Board of Directors</a>
-<a class="block hover:text-primary transition-colors" href="#">Love Pasitos Monthly</a>
-<a class="block hover:text-primary transition-colors" href="#">Volunteer</a>
-</div>
-<div class="space-y-3">
-<a class="block hover:text-primary transition-colors" href="#">List of Necessities</a>
-<a class="block hover:text-primary transition-colors" href="#">Financials</a>
-<a class="block hover:text-primary transition-colors" href="#">Campaigns</a>
-</div>
-<div class="space-y-3">
-<a class="block hover:text-primary transition-colors" href="#">Events</a>
-<a class="block hover:text-primary transition-colors" href="#">News</a>
-<a class="block hover:text-primary transition-colors" href="#">Frequently Asked Questions</a>
-</div>
-</div>
-<div class="mt-12 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-slate-900 pt-8">
-                    © 2023 Pasitos de Luz / Casa Connor. All rights reserved.
-                    <div class="mt-3">
-                        <a class="font-semibold underline underline-offset-4 hover:text-primary" href="../php/login.php">Administracion: agregar productos</a>
+
+                    <div class="col-lg-4 d-flex flex-column align-items-center justify-content-center border-start border-light border-opacity-25">
+                        <h4 class="mb-3 fw-light italic"><i class="bi bi-book me-2"></i> Boletín Informativo</h4>
+                        <button class="btn btn-subscribe shadow-sm mb-3">SUBSCRIBETE</button>
+                        <a href="#" class="text-white text-decoration-none small opacity-75">AVISO DE PRIVACIDAD</a>
                     </div>
                 </div>
-</div>
-</div>
-</footer>
 
+                <div class="mt-4 fs-4">
+                    <i class="bi bi-telephone mx-2"></i>
+                    <i class="bi bi-whatsapp mx-2"></i>
+                    <i class="bi bi-geo-alt mx-2"></i>
+                    <i class="bi bi-facebook mx-2"></i>
+                    <i class="bi bi-instagram mx-2"></i>
+                    <i class="bi bi-youtube mx-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white py-5 border-top">
+            <div class="container">
+                <div class="row text-center footer-links g-4">
+                    <div class="col-6 col-md-3">
+                        <h6 class="fw-bold mb-3">Sobre Nosotros</h6>
+                        <ul class="list-unstyled small">
+                            <li class="mb-2"><a href="#">Historia Pasitos de Luz</a></li>
+                            <li><a href="#">Casa Connor</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <h6 class="fw-bold mb-3">Dirección y Junta Administrativa</h6>
+                        <ul class="list-unstyled small">
+                            <li class="mb-2"><a href="#">Dona por Amor</a></li>
+                            <li><a href="#">Se Voluntario</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <h6 class="fw-bold mb-3">Dona de Nuestra Lista de Necesidades</h6>
+                        <ul class="list-unstyled small">
+                            <li class="mb-2"><a href="#">Finanzas</a></li>
+                            <li><a href="#">Campañas</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <h6 class="fw-bold mb-3">Eventos</h6>
+                        <ul class="list-unstyled small">
+                            <li class="mb-2"><a href="#">Noticias</a></li>
+                            <li><a href="#">Preguntas Frecuentes</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="text-center small mt-4">
+                    <a href="../php/login.php" class="text-decoration-none">Administracion: agregar productos</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body></html>

@@ -1,10 +1,21 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
+
+$hasRole = false;
+$checkRole = $mysqli->query("SHOW COLUMNS FROM admin LIKE 'rol'");
+if ($checkRole && $checkRole->num_rows > 0) {
+    $hasRole = true;
+}
 
 $id = (int) ($_POST["id"] ?? 0);
 $usuario = trim($_POST["usuario"] ?? "");
 $contrasena = $_POST["contrasena"] ?? "";
+$rol = strtolower(trim($_POST["rol"] ?? "admin"));
+if (!in_array($rol, ["admin", "operativo"], true)) {
+    $rol = "admin";
+}
 
 if ($id <= 0 || $usuario === "") {
     header("Location: editar_personal.php?id=" . $id . "&error=invalid");
@@ -27,19 +38,43 @@ if ($stmtCheck) {
 
 if ($contrasena !== "") {
     $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-    $stmt = $mysqli->prepare("UPDATE admin SET usuario = ?, password = ? WHERE id = ?");
+    $sql = "UPDATE admin SET usuario = ?, password = ?";
+    $types = "ss";
+    $params = [$usuario, $hash];
+    if ($hasRole) {
+        $sql .= ", rol = ?";
+        $types .= "s";
+        $params[] = $rol;
+    }
+    $sql .= " WHERE id = ?";
+    $types .= "i";
+    $params[] = $id;
+
+    $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         header("Location: editar_personal.php?id=" . $id . "&error=error");
         exit;
     }
-    $stmt->bind_param("ssi", $usuario, $hash, $id);
+    $stmt->bind_param($types, ...$params);
 } else {
-    $stmt = $mysqli->prepare("UPDATE admin SET usuario = ? WHERE id = ?");
+    $sql = "UPDATE admin SET usuario = ?";
+    $types = "s";
+    $params = [$usuario];
+    if ($hasRole) {
+        $sql .= ", rol = ?";
+        $types .= "s";
+        $params[] = $rol;
+    }
+    $sql .= " WHERE id = ?";
+    $types .= "i";
+    $params[] = $id;
+
+    $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         header("Location: editar_personal.php?id=" . $id . "&error=error");
         exit;
     }
-    $stmt->bind_param("si", $usuario, $id);
+    $stmt->bind_param($types, ...$params);
 }
 
 if ($stmt->execute()) {

@@ -1,6 +1,13 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
+
+$hasRole = false;
+$checkRole = $mysqli->query("SHOW COLUMNS FROM admin LIKE 'rol'");
+if ($checkRole && $checkRole->num_rows > 0) {
+    $hasRole = true;
+}
 
 $id = (int) ($_GET["id"] ?? 0);
 if ($id <= 0) {
@@ -8,7 +15,8 @@ if ($id <= 0) {
     exit("Personal invalido.");
 }
 
-$stmt = $mysqli->prepare("SELECT id, usuario FROM admin WHERE id = ? LIMIT 1");
+$selectRole = $hasRole ? ", rol" : "";
+$stmt = $mysqli->prepare("SELECT id, usuario$selectRole FROM admin WHERE id = ? LIMIT 1");
 if (!$stmt) {
     http_response_code(500);
     exit("No se pudo consultar el personal.");
@@ -64,6 +72,15 @@ $error = trim($_GET["error"] ?? "");
                     <span>Usuario</span>
                     <input name="usuario" type="text" required value="<?php echo htmlspecialchars($admin["usuario"] ?? ""); ?>" />
                 </label>
+                <?php if ($hasRole) { ?>
+                    <label class="field">
+                        <span>Rol</span>
+                        <select name="rol" required>
+                            <option value="admin" <?php echo (($admin["rol"] ?? "admin") === "admin") ? "selected" : ""; ?>>Administrador</option>
+                            <option value="operativo" <?php echo (($admin["rol"] ?? "") === "operativo") ? "selected" : ""; ?>>Operativo</option>
+                        </select>
+                    </label>
+                <?php } ?>
                 <label class="field">
                     <span>Nueva contrasena</span>
                     <input name="contrasena" type="password" placeholder="Deja en blanco para no cambiar" />

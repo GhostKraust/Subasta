@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -22,7 +23,7 @@ if ($id <= 0 || $nombre === "" || $descripcion === "" || $precioInicial <= 0 || 
     exit("Faltan datos requeridos.");
 }
 
-if (!in_array($estado, ["activo", "finalizado"], true)) {
+if (!in_array($estado, ["activo", "finalizado", "pausado"], true)) {
     http_response_code(400);
     exit("Estado no valido.");
 }

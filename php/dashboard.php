@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 
 $precioColumn = "predcio_inicial";
@@ -109,7 +110,7 @@ if ($resultPujas) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="../css/style.css" rel="stylesheet" />
-    <link href="../css/dashboard.css" rel="stylesheet" />
+    <link href="../css/dashboard.css?v=20260303" rel="stylesheet" />
 </head>
 <body class="auth-page">
     <header class="dash-header">
@@ -121,8 +122,10 @@ if ($resultPujas) {
             </div>
         </div>
         <div class="dash-actions">
-            <a class="btn ghost" href="panel.php">Nuevo producto</a>
-            <a class="btn" href="logout.php">Cerrar sesion</a>
+            <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
+            <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
+            <a class="btn btn-compact ghost" href="panel.php">Nuevo producto</a>
+            <a class="btn btn-compact" href="logout.php">Cerrar sesion</a>
         </div>
     </header>
 
