@@ -3,6 +3,12 @@ require_once __DIR__ . "/auth.php";
 require_admin();
 require_once __DIR__ . "/../config/db.php";
 
+$adminName = trim($_SESSION["admin_user"] ?? "Administrador");
+if ($adminName === "") {
+    $adminName = "Administrador";
+}
+$todayLabel = date("d/m/Y");
+
 $precioColumn = "predcio_inicial";
 $checkPrecio = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'predcio_inicial'");
 if ($checkPrecio && $checkPrecio->num_rows === 0) {
@@ -117,8 +123,8 @@ if ($resultPujas) {
         <div class="dash-title">
             <div class="brand-mark">A</div>
             <div>
-                <div class="brand-name">Administracion</div>
-                <div class="brand-tag">Resumen de subastas</div>
+                <div class="brand-name">Hola <?php echo htmlspecialchars($adminName); ?></div>
+                <div class="brand-tag">Fecha: <?php echo htmlspecialchars($todayLabel); ?></div>
             </div>
         </div>
         <div class="dash-actions">
@@ -154,11 +160,16 @@ if ($resultPujas) {
 
             <article class="card">
                 <div class="card-title">Pujas registradas</div>
-                <div class="pill-row">
-                    <span class="pill">Total: <?php echo $totalPujas; ?></span>
+                <div class="donut-wrap">
+                    <div class="donut" style="--progress: 100">
+                        <div class="donut-center">
+                            <span class="donut-label">Total</span>
+                            <strong><?php echo $totalPujas; ?></strong>
+                        </div>
+                    </div>
                 </div>
                 <div class="note">Ver ganadores de subastas cerradas.</div>
-                <a class="btn ghost" href="ganadores.php">Ver ganadores</a>
+                <a class="btn ghost btn-block" href="ganadores.php">Ver ganadores</a>
             </article>
 
             <article class="card">
@@ -181,11 +192,20 @@ if ($resultPujas) {
         <section class="dash-grid">
             <article class="card">
                 <div class="card-title">Estado de subastas</div>
-                <div class="pill-row">
-                    <span class="pill">Activas: <?php echo $estadoActivas; ?></span>
-                    <span class="pill">Finalizadas: <?php echo $estadoFinalizadas; ?></span>
+                <div class="status-grid">
+                    <div class="status-card status-active">
+                        <div class="status-value"><?php echo $estadoActivas; ?></div>
+                        <div class="status-label">Activas</div>
+                    </div>
+                    <div class="status-card status-closed">
+                        <div class="status-value"><?php echo $estadoFinalizadas; ?></div>
+                        <div class="status-label">Finalizadas</div>
+                    </div>
                     <?php if ($estadoProximas > 0) { ?>
-                        <span class="pill">Proximas: <?php echo $estadoProximas; ?></span>
+                        <div class="status-card status-next">
+                            <div class="status-value"><?php echo $estadoProximas; ?></div>
+                            <div class="status-label">Proximas</div>
+                        </div>
                     <?php } ?>
                 </div>
                 <div class="note">Puedes editar productos antes de publicar.</div>

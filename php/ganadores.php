@@ -139,10 +139,10 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
             </div>
         </div>
         <div class="dash-actions">
-            <a class="btn ghost" href="export_ganadores.php?format=excel<?php echo $exportQuery; ?>">Exportar Excel</a>
-            <a class="btn ghost" href="export_ganadores.php?format=pdf<?php echo $exportQuery; ?>" target="_blank" rel="noopener">Exportar PDF</a>
-            <a class="btn ghost" href="dashboard.php">Volver al dashboard</a>
-            <a class="btn" href="panel.php">Panel</a>
+            <a class="btn btn-compact ghost" href="export_ganadores.php?format=excel<?php echo $exportQuery; ?>">Exportar Excel</a>
+            <a class="btn btn-compact ghost" href="export_ganadores.php?format=pdf<?php echo $exportQuery; ?>" target="_blank" rel="noopener">Exportar PDF</a>
+            <a class="btn btn-compact ghost" href="dashboard.php">Volver al dashboard</a>
+            <a class="btn btn-compact" href="panel.php">Panel</a>
         </div>
     </header>
 
@@ -172,8 +172,8 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
                     </label>
                 </div>
                 <div class="filter-actions">
-                    <button class="btn" type="submit">Aplicar filtros</button>
-                    <a class="btn ghost" href="ganadores.php">Limpiar</a>
+                    <button class="btn btn-compact" type="submit">Aplicar filtros</button>
+                    <a class="btn btn-compact ghost" href="ganadores.php">Limpiar</a>
                 </div>
             </form>
         </section>

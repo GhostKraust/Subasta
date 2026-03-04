@@ -165,14 +165,10 @@ if ($resultProductos) {
         <div class="container-fluid px-4">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <img src="../Imagenes/logo_pasitos-removebg-preview.png" alt="Pasitos de Luz" class="me-2 logo-pasitos">
-                <img src="../Imagenes/logo_casa_connor.png" alt="Casa Connor" height="55">
+                <img src="../Imagenes/connor29.png" alt="Casa Connor" height="55">
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto fw-semibold" style="font-size: 0.95rem;">
                     <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">About Us <i class="bi bi-chevron-down small"></i></a></li>
@@ -219,10 +215,10 @@ if ($resultProductos) {
 </div>
 <?php } ?>
 <div class="container mx-auto px-6 mt-8">
-<form method="get" class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+<form method="get" class="filter-bar flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
     <div class="flex items-center gap-4">
         <span class="font-medium text-slate-500">Filter by:</span>
-        <select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+        <select name="categoria" class="filter-control bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
             <option value="0">Todas las categorias</option>
             <?php foreach ($categorias as $categoria) { ?>
                 <option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
@@ -230,7 +226,7 @@ if ($resultProductos) {
                 </option>
             <?php } ?>
         </select>
-        <select name="orden" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+        <select name="orden" class="filter-control bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
             <option value="">Ordenar</option>
             <option value="precio_asc" <?php echo $ordenFiltro === "precio_asc" ? "selected" : ""; ?>>Price: Low to High</option>
             <option value="precio_desc" <?php echo $ordenFiltro === "precio_desc" ? "selected" : ""; ?>>Price: High to Low</option>
@@ -238,7 +234,7 @@ if ($resultProductos) {
         </select>
     </div>
     <div class="relative w-full md:w-64">
-        <input name="q" value="<?php echo htmlspecialchars($busqueda); ?>" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
+        <input name="q" value="<?php echo htmlspecialchars($busqueda); ?>" class="filter-control w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
         <span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
     </div>
 </form>
@@ -352,7 +348,7 @@ if ($resultProductos) {
 <?php } ?>
 </div>
 <div class="mt-16 flex justify-center">
-<button class="flex items-center gap-2 px-8 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-full transition-all">
+<button class="btn-outline-small flex items-center gap-2 px-8 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-full transition-all">
                 Load More Items <span class="material-icons">refresh</span>
 </button>
 </div>
@@ -429,5 +425,20 @@ if ($resultProductos) {
         </div>
     </footer>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var toggler = document.querySelector(".navbar-toggler");
+        var collapse = document.getElementById("navbarNav");
+        if (!toggler || !collapse) {
+            return;
+        }
+
+        toggler.addEventListener("click", function (event) {
+            event.preventDefault();
+            collapse.classList.toggle("show");
+            toggler.setAttribute("aria-expanded", collapse.classList.contains("show") ? "true" : "false");
+        });
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body></html>
