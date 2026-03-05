@@ -130,14 +130,15 @@ if ($resultPujas) {
         <div class="dash-actions">
             <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
             <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
-            <a class="btn btn-compact ghost" href="panel.php">Nuevo producto</a>
+            <a class="btn btn-compact ghost" href="productos.php">Nuevo producto</a>
+            <a class="btn btn-compact ghost" href="panel.php">Panel</a>
             <a class="btn btn-compact" href="logout.php">Cerrar sesion</a>
         </div>
     </header>
 
     <main class="dashboard">
         <section class="dash-grid">
-            <article class="card">
+            <article class="card card-categories">
                 <div class="card-title">Productos por categoria</div>
                 <div class="chart">
                     <?php if (count($categorias) === 0) { ?>
@@ -190,7 +191,7 @@ if ($resultPujas) {
         </section>
 
         <section class="dash-grid">
-            <article class="card">
+            <article class="card card-status">
                 <div class="card-title">Estado de subastas</div>
                 <div class="status-grid">
                     <div class="status-card status-active">

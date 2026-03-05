@@ -1,11 +1,12 @@
 :root {
-  --bg: #f5efe8;
-  --bg-accent: #f0d9c4;
-  --card: #fff9f3;
-  --ink: #1f1a17;
-  --muted: #6b5f57;
-  --border: #ead9cc;
-  --shadow: 0 14px 28px rgba(26, 20, 16, 0.12);
+  --bg: #f7ecf3;
+  --bg-soft: #fff7fb;
+  --ink: #1f2a3a;
+  --muted: #6b7280;
+  --accent: #6f8fe8;
+  --accent-2: #f5a3c7;
+  --border: rgba(233, 200, 220, 0.6);
+  --shadow: 0 20px 40px rgba(150, 120, 145, 0.18);
 }
 
 * {
@@ -16,9 +17,9 @@ body {
   margin: 0;
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
-  background: radial-gradient(circle at 10% 20%, var(--bg-accent), transparent 55%),
-    radial-gradient(circle at 90% 10%, #efe8df, transparent 45%),
-    var(--bg);
+  background: radial-gradient(circle at 12% 18%, rgba(248, 205, 224, 0.5), transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(186, 209, 250, 0.45), transparent 50%),
+    linear-gradient(180deg, #fbe8f2 0%, #f7edf4 40%, #f2e9f1 100%);
 }
 
 .page {
@@ -32,9 +33,9 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background: linear-gradient(120deg, #fff3e5, #f7ebe0 60%, #f1dccb);
+  background: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 26px;
   padding: 24px 28px;
   box-shadow: var(--shadow);
 }
@@ -61,11 +62,12 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  color: deeppink;
 }
 
 .theme-btn {
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid rgba(229, 233, 242, 0.9);
+  background: #ffffff;
   padding: 10px 16px;
   border-radius: 999px;
   cursor: pointer;
@@ -73,9 +75,22 @@ body {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.theme-btn-primary {
+  border: none;
+  background: linear-gradient(135deg, #ff66f2, #f77ff1);
+  color: #ffffff;
+  padding: 11px 18px;
+  box-shadow: 0 12px 24px rgba(108, 136, 234, 0.25);
+}
+
+.theme-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px rgba(108, 136, 234, 0.3);
+}
+
 .theme-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 18px rgba(20, 16, 12, 0.12);
+  box-shadow: 0 12px 24px rgba(108, 136, 234, 0.18);
 }
 
 .filters {
@@ -98,16 +113,16 @@ body {
   font-family: "Space Grotesk", sans-serif;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid rgba(229, 233, 242, 0.9);
+  background: #ffffff;
 }
 
 .filter input[type="date"] {
   font-family: "Space Grotesk", sans-serif;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid rgba(229, 233, 242, 0.9);
+  background: #ffffff;
 }
 
 .grid {
@@ -118,10 +133,10 @@ body {
 }
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 16px 18px 20px;
+  background: #ffffff;
+  border: 2px solid var(--border);
+  border-radius: 26px;
+  padding: 20px 22px 24px;
   box-shadow: var(--shadow);
   min-height: 320px;
 }
@@ -139,8 +154,8 @@ body {
 }
 
 .chip {
-  background: #f2e6dc;
-  color: #6a5544;
+  background: rgba(245, 163, 199, 0.2);
+  color: #6b4f5a;
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 12px;

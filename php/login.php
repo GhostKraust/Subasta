@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . "/../config/db.php";
 
+$maxIntentos = 5;
+$ventanaMin = 15;
+$bloqueoHoras = 2;
 session_start();
 
 $error = "";
@@ -13,8 +16,47 @@ if ($checkRole && $checkRole->num_rows > 0) {
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $usuario = trim($_POST["usuario"] ?? "");
     $contrasena = $_POST["contrasena"] ?? "";
+    $ip = $_SERVER["REMOTE_ADDR"] ?? "";
+    $ahora = new DateTime();
+    $bloqueado = false;
+    $intentos = 0;
 
-    if ($usuario === "" || $contrasena === "") {
+    if ($usuario !== "") {
+        $stmtIntento = $mysqli->prepare("SELECT intentos, bloqueado_hasta, actualizado_en FROM login_intentos WHERE usuario = ? AND ip = ? LIMIT 1");
+        if ($stmtIntento) {
+            $stmtIntento->bind_param("ss", $usuario, $ip);
+            $stmtIntento->execute();
+            $resIntento = $stmtIntento->get_result();
+            $rowIntento = $resIntento ? $resIntento->fetch_assoc() : null;
+            $stmtIntento->close();
+            if ($rowIntento) {
+                $intentos = (int) ($rowIntento["intentos"] ?? 0);
+                $bloqueadoHastaRaw = $rowIntento["bloqueado_hasta"] ?? null;
+                if ($bloqueadoHastaRaw) {
+                    $bloqueadoHasta = new DateTime($bloqueadoHastaRaw);
+                    if ($bloqueadoHasta > $ahora) {
+                        $bloqueado = true;
+                        $diff = $ahora->diff($bloqueadoHasta);
+                        $minutos = ($diff->days * 24 * 60) + ($diff->h * 60) + $diff->i;
+                        $error = "Demasiados intentos. Intenta de nuevo en " . max(1, $minutos) . " minutos.";
+                    }
+                }
+
+                $actualizadoRaw = $rowIntento["actualizado_en"] ?? null;
+                if ($actualizadoRaw) {
+                    $actualizado = new DateTime($actualizadoRaw);
+                    $limite = (clone $ahora)->modify("-" . $ventanaMin . " minutes");
+                    if ($actualizado < $limite) {
+                        $intentos = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    if ($bloqueado) {
+        // bloqueado por intentos
+    } elseif ($usuario === "" || $contrasena === "") {
         $error = "Completa usuario y contrasena.";
     } else {
         $selectRole = $hasRole ? ", rol" : "";
@@ -33,6 +75,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             if ($admin && $isValid) {
+                $clearIntento = $mysqli->prepare("DELETE FROM login_intentos WHERE usuario = ? AND ip = ?");
+                if ($clearIntento) {
+                    $clearIntento->bind_param("ss", $usuario, $ip);
+                    $clearIntento->execute();
+                    $clearIntento->close();
+                }
+
                 $role = "admin";
                 if ($hasRole) {
                     $role = strtolower(trim($admin["rol"] ?? "admin"));
@@ -48,6 +97,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 exit;
             }
         }
+
+        if ($usuario !== "") {
+            $intentos += 1;
+            $bloqueadoHasta = null;
+            if ($intentos >= $maxIntentos) {
+                $bloqueadoHasta = (clone $ahora)->modify("+" . $bloqueoHoras . " hours");
+            }
+
+            $stmtUp = $mysqli->prepare(
+                "INSERT INTO login_intentos (usuario, ip, intentos, bloqueado_hasta) " .
+                "VALUES (?, ?, ?, ?) " .
+                "ON DUPLICATE KEY UPDATE intentos = VALUES(intentos), bloqueado_hasta = VALUES(bloqueado_hasta)"
+            );
+            if ($stmtUp) {
+                $bloqueadoStr = $bloqueadoHasta ? $bloqueadoHasta->format("Y-m-d H:i:s") : null;
+                $stmtUp->bind_param("ssis", $usuario, $ip, $intentos, $bloqueadoStr);
+                $stmtUp->execute();
+                $stmtUp->close();
+            }
+        }
+
         $error = "Credenciales invalidas.";
     }
 }
@@ -85,7 +155,7 @@ if ($resultCerradas) {
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="../css/style.css" rel="stylesheet" />
 </head>
-<body class="auth-page">
+<body class="auth-page login-page">
     <main class="auth">
         <section class="auth-card">
             <div class="auth-brand">
@@ -113,26 +183,6 @@ if ($resultCerradas) {
             </form>
             <div class="switch">Solo personal administrativo.</div>
         </section>
-        <aside class="auth-panel">
-            <div class="panel-content">
-                <h2>Gestion rapida de subastas</h2>
-                <p>Agrega productos, actualiza precios iniciales e incrementos minimos y revisa las pujas activas.</p>
-                <div class="panel-stats">
-                    <div>
-                        <span>Productos activos</span>
-                        <strong><?php echo number_format($statsActivos); ?></strong>
-                    </div>
-                    <div>
-                        <span>Pujas hoy</span>
-                        <strong><?php echo number_format($statsPujasHoy); ?></strong>
-                    </div>
-                    <div>
-                        <span>Subastas cerradas</span>
-                        <strong><?php echo number_format($statsCerradas); ?></strong>
-                    </div>
-                </div>
-            </div>
-        </aside>
     </main>
 </body>
 </html>

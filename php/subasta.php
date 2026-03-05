@@ -82,10 +82,7 @@ $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
-$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo','finalizado')";
-if ($hasFin) {
-    $queryProductos .= " AND (p.fecha_fin IS NULL OR p.fecha_fin >= DATE_SUB(NOW(), INTERVAL 2 DAY))";
-}
+$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado = 'activo'";
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
@@ -116,7 +113,7 @@ if ($resultProductos) {
 <html lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Charity Auction - Pasitos de Luz / Casa Connor</title>
+<title>Subasta-Pasitos de Luz-Casa Connor</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>

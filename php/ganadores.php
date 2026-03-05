@@ -3,11 +3,7 @@ require_once __DIR__ . "/auth.php";
 require_admin();
 require_once __DIR__ . "/../config/db.php";
 
-$hasFin = false;
-$checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
-if ($checkFin && $checkFin->num_rows > 0) {
-    $hasFin = true;
-}
+$hasFin = true;
 
 $categorias = [];
 $resultCategorias = $mysqli->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC");
@@ -44,43 +40,21 @@ if ($fromDate && $toDate && $fromDate > $toDate) {
 $fromSql = $fromDate ? $fromDate->format("Y-m-d 00:00:00") : "";
 $toSql = $toDate ? $toDate->format("Y-m-d 23:59:59") : "";
 
-$selectFin = $hasFin ? ", p.fecha_fin" : "";
-$condFinal = "p.estado = 'finalizado'";
-if ($hasFin) {
-    $condFinal .= " OR (p.fecha_fin IS NOT NULL AND p.fecha_fin < NOW())";
-}
+$query = "SELECT gh.producto_id AS id, gh.producto_nombre AS nombre, gh.fecha_cierre AS fecha_fin,
+    'finalizado' AS estado, gh.nombre_usuario, gh.correo_usuario, gh.telefono_usuario, gh.monto_puja, gh.fecha_puja
+    FROM ganadores_historial gh WHERE 1=1";
 
-$query = "SELECT p.id, p.nombre$selectFin, p.estado,
-    w.nombre_usuario, w.correo_usuario, w.telefono_usuario, w.monto_puja, w.fecha_puja
-    FROM productos p
-    LEFT JOIN (
-        SELECT pu1.*
-        FROM pujas pu1
-        INNER JOIN (
-            SELECT producto_id, MAX(monto_puja) AS max_monto
-            FROM pujas
-            GROUP BY producto_id
-        ) mx ON pu1.producto_id = mx.producto_id AND pu1.monto_puja = mx.max_monto
-        INNER JOIN (
-            SELECT producto_id, MAX(fecha_puja) AS max_fecha
-            FROM pujas
-            GROUP BY producto_id
-        ) mf ON pu1.producto_id = mf.producto_id AND pu1.fecha_puja = mf.max_fecha
-    ) w ON w.producto_id = p.id
-    WHERE $condFinal";
-
-$dateField = $hasFin ? "p.fecha_fin" : "w.fecha_puja";
 if ($fromSql !== "") {
-    $query .= " AND $dateField >= '" . $mysqli->real_escape_string($fromSql) . "'";
+    $query .= " AND gh.fecha_cierre >= '" . $mysqli->real_escape_string($fromSql) . "'";
 }
 if ($toSql !== "") {
-    $query .= " AND $dateField <= '" . $mysqli->real_escape_string($toSql) . "'";
+    $query .= " AND gh.fecha_cierre <= '" . $mysqli->real_escape_string($toSql) . "'";
 }
 if ($categoriaFiltro > 0) {
-    $query .= " AND p.categoria_id = " . $categoriaFiltro;
+    $query .= " AND gh.categoria_id = " . $categoriaFiltro;
 }
 
-$query .= " ORDER BY " . ($hasFin ? "p.fecha_fin DESC, " : "") . "p.id DESC";
+$query .= " ORDER BY gh.fecha_cierre DESC, gh.id DESC";
 
 $ganadores = [];
 $result = $mysqli->query($query);
@@ -140,7 +114,7 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
         </div>
         <div class="dash-actions">
             <a class="btn btn-compact ghost" href="export_ganadores.php?format=excel<?php echo $exportQuery; ?>">Exportar Excel</a>
-            <a class="btn btn-compact ghost" href="export_ganadores.php?format=pdf<?php echo $exportQuery; ?>" target="_blank" rel="noopener">Exportar PDF</a>
+            <a class="btn btn-compact ghost" href="export_ganadores.php?format=pdf<?php echo $exportQuery; ?>">Exportar PDF</a>
             <a class="btn btn-compact ghost" href="dashboard.php">Volver al dashboard</a>
             <a class="btn btn-compact" href="panel.php">Panel</a>
         </div>

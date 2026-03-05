@@ -188,5 +188,5 @@ if (!$stmt->execute()) {
 }
 
 $stmt->close();
-header("Location: panel.php?ok=1");
+header("Location: productos.php?ok=1");
 exit;

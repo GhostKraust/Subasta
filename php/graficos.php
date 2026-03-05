@@ -202,14 +202,11 @@ if (!empty($_GET["data"])) {
     <header class="hero">
       <div>
         <p class="eyebrow">Panel de control</p>
-        <h1>Graficas para subasta</h1>
-        <p class="subtitle">Cambios de color rapidos y widgets listos para conectar datos reales.</p>
+        <h1>Graficas de subasta</h1>
+        <p class="subtitle"></p>
       </div>
       <div class="theme-switch">
-        <button class="theme-btn" data-theme="sunset">Sunset</button>
-        <button class="theme-btn" data-theme="ocean">Ocean</button>
-        <button class="theme-btn" data-theme="mint">Mint</button>
-        <a class="theme-btn" href="dashboard.php">Dashboard</a>
+        <a class="theme-btn theme-btn-primary" href="dashboard.php">Dashboard</a>
       </div>
     </header>
 

@@ -7,6 +7,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 $productoId = (int) ($_POST["producto_id"] ?? 0);
+$anonimo = isset($_POST["anonimo"]) && $_POST["anonimo"] === "1";
 $nombre = trim($_POST["nombre_usuario"] ?? "");
 $correo = trim($_POST["correo_usuario"] ?? "");
 $telefono = trim($_POST["telefono_usuario"] ?? "");
@@ -15,9 +16,13 @@ $categoriaFiltro = (int) ($_POST["categoria"] ?? 0);
 $ordenFiltro = trim($_POST["orden"] ?? "");
 $busqueda = trim($_POST["q"] ?? "");
 
-if ($productoId <= 0 || $nombre === "" || $correo === "" || $telefono === "" || $monto <= 0) {
+if ($productoId <= 0 || ($nombre === "" && !$anonimo) || $correo === "" || $telefono === "" || $monto <= 0) {
     header("Location: producto.php?id=" . $productoId . "&status=error");
     exit;
+}
+
+if ($anonimo) {
+    $nombre = "Anonimo";
 }
 
 $precioColumn = "predcio_inicial";

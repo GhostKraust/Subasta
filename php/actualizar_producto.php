@@ -255,5 +255,5 @@ if ($imagenUrl !== null && $imagenAnterior !== "" && str_starts_with($imagenAnte
     }
 }
 
-header("Location: panel.php?updated=1");
+header("Location: productos.php?updated=1");
 exit;

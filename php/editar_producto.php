@@ -158,7 +158,7 @@ if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
                 <button class="btn" type="submit">Guardar cambios</button>
             </form>
             <div class="switch">
-                <a class="link" href="panel.php">Volver al panel</a>
+                <a class="link" href="productos.php">Volver a productos</a>
             </div>
         </section>
         <aside class="auth-panel">

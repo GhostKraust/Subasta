@@ -18,8 +18,8 @@ body.auth-page {
 }
 /*barra de progreso*/
 .dash-header {
-        max-width: 2000px;
-    margin: auto 5px;
+    max-width: 2000px;
+    margin: auto -0px;
     padding: 10px 7px;
     display: flex;
     align-items: center;
@@ -68,7 +68,7 @@ body.auth-page {
 }
 
 .btn {
-    background: linear-gradient(135deg, #6c88ea, #86a7ff);
+    background: linear-gradient(135deg, rgb(253, 113, 255), rgb(255, 161, 222));
     color: #ffffff;
     border: none;
     box-shadow: 0 12px 24px rgba(108, 136, 234, 0.25);
@@ -101,12 +101,31 @@ body.auth-page {
 
 .card {
     background: #ffffff;
-    border: 1px solid rgba(233, 200, 220, 0.6);
-    border-radius: 26px;
+    border: 2px solid rgba(233, 200, 220, 0.6);
+    border-radius: 33px;
     padding: 24px;
     box-shadow: var(--shadow);
     display: grid;
     gap: 16px;
+}
+
+.card-status {
+    align-self: start;
+    justify-self: start;
+    height: fit-content;
+    padding: 31px 64px 43px;
+    gap: 68px;
+    align-content: start;
+
+}
+
+.card-status .card-title {
+    margin-bottom: 4px;
+}
+
+.card-categories {
+    padding: 36px 36px 40px;
+    min-height: 420px;
 }
 
 .donut-wrap {
@@ -120,7 +139,7 @@ body.auth-page {
     height: 160px;
     border-radius: 50%;
     position: relative;
-    background: conic-gradient(#6f8fe8 calc(var(--progress) * 1%), rgba(108, 136, 234, 0.12) 0);
+    background: linear-gradient(135deg, #ff66f2, #f77ff1);
 }
 
 .donut-center {
@@ -164,8 +183,9 @@ body.auth-page {
 }
 
 .chart {
-    display: grid;
-    gap: 12px;
+    display: contents;
+    gap: 1px;
+
 }
 
 .bar-row {
@@ -278,7 +298,8 @@ body.auth-page {
     justify-content: space-between;
     padding: 10px 12px;
     border-radius: 12px;
-    background: #f7f1ec;
+    background: #ffffff;
+    border: 1px solid rgba(8, 9, 9, 0.1);
 }
 
 .pill-row {
@@ -332,8 +353,8 @@ body.auth-page {
 }
 
 .status-card {
-    width: 90px;
-    height: 90px;
+    width: 130px;
+    height: 130px;
     border-radius: 20px;
     display: grid;
     place-items: center;
@@ -352,7 +373,7 @@ body.auth-page {
 }
 
 .status-active {
-    background: linear-gradient(140deg, #7da2f3, #9bb9ff);
+    background: linear-gradient(140deg, #ff83fb, #f6bfbf);
     color: #ffffff;
 }
 
@@ -361,7 +382,7 @@ body.auth-page {
 }
 
 .status-closed {
-    background: linear-gradient(140deg, #f6b1cc, #ffd2e4);
+   background: linear-gradient(140deg, #ff83fb, #f6bfbf);
     color: #3a2b32;
 }
 

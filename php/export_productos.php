@@ -180,10 +180,9 @@ $generatedAt = date("Y-m-d H:i");
             color: #555;
             font-size: 0.9rem;
         }
-        .hint {
-            margin: 6px 0 16px;
-            color: #555;
-            font-size: 0.9rem;
+        @page {
+            size: landscape;
+            margin: 12mm;
         }
         table {
             width: 100%;
@@ -200,9 +199,6 @@ $generatedAt = date("Y-m-d H:i");
             background: #f1f1f1;
         }
         @media print {
-            .hint {
-                display: none;
-            }
             body {
                 margin: 12mm;
             }
@@ -215,7 +211,11 @@ $generatedAt = date("Y-m-d H:i");
         <div class="meta">Generado: <?php echo htmlspecialchars($generatedAt); ?></div>
     </header>
     <?php if (!$isExcel) { ?>
-        <div class="hint">Usa la opcion de imprimir del navegador para guardar en PDF.</div>
+        <script>
+            window.addEventListener("load", function () {
+                window.print();
+            });
+        </script>
     <?php } ?>
     <table>
         <thead>
