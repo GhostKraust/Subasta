@@ -215,6 +215,7 @@ if (!empty($_GET["ok"])) {
         <div class="panel-actions">
             <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
             <?php if ($isAdmin) { ?>
+                <a class="btn btn-compact ghost" href="historial_productos.php">Historial</a>
                 <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
                 <a class="btn btn-compact" href="dashboard.php">Ir al dashboard</a>
             <?php } ?>

@@ -24,7 +24,7 @@ body {
 .top-bar .fw-bold {
     font-size: 1.4rem;
     font-weight: 1500;
-    color: #000000;
+    color: #ffffff;
     width: 400px;
 }
 /*tamaño de los iconos de la parte derecha de la barra superior*/
@@ -49,7 +49,7 @@ body {
 }
 
 .nav-link {
-    color: #111111 !important;
+    color: #000000 !important;
     padding: 0.4rem 0.6rem !important;
 }
 
@@ -64,7 +64,7 @@ body {
 
 .navbar-nav .nav-link.active {
     position: relative;
-    color: #111111 !important;
+    color: #000000 !important;
 }
 /*esta parte es la linea que aparece debajo del link activo en la barra de navegacion*/
 .navbar-nav .nav-link.active::after {
@@ -118,7 +118,7 @@ body {
         padding: 0.75rem 1rem;
         margin-top: 0.5rem;
         border-radius: 16px;
-        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 14px 30px rgb(0, 0, 0);
     }
 }
 /*la parte del logo en el footer*/

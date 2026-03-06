@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/auth.php";
 require_once __DIR__ . "/../config/db.php";
+require_once __DIR__ . "/lib/historial_productos.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
@@ -186,6 +187,25 @@ if (!$stmt->execute()) {
     http_response_code(500);
     exit("No se pudo guardar el producto.");
 }
+
+$newId = (int) $mysqli->insert_id;
+$usuarioId = $_SESSION["admin_id"] ?? null;
+$usuarioNombre = trim($_SESSION["admin_user"] ?? "");
+$changes = [
+    "before" => null,
+    "after" => [
+        "nombre" => $nombre,
+        "descripcion" => $descripcion,
+        "imagen_url" => $imagenUrl,
+        "precio_inicial" => $precioInicial,
+        "incremento_minimo" => $hasIncremento ? $incrementoMinimo : null,
+        "fecha_inicio" => $hasInicio ? $fechaInicio : null,
+        "fecha_fin" => $hasFin ? $fechaFin : null,
+        "categoria_id" => $categoriaId,
+        "estado" => "activo"
+    ]
+];
+log_producto_historial($mysqli, "crear", $newId, $nombre, $usuarioId, $usuarioNombre, $changes);
 
 $stmt->close();
 header("Location: productos.php?ok=1");

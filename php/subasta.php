@@ -82,7 +82,7 @@ $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
-$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado = 'activo'";
+$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo', 'pausado')";
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
@@ -276,7 +276,9 @@ if ($resultProductos) {
             $statusBadge = "";
             $tiempoRestanteTexto = "";
             if (!$estadoActual) {
-                if ($fin !== null && $ahora > $fin) {
+                if (($producto["estado"] ?? "") === "pausado") {
+                    $statusBadge = "Pausado";
+                } elseif ($fin !== null && $ahora > $fin) {
                     $statusBadge = "Finalizado";
                 } elseif ($inicio !== null && $ahora < $inicio) {
                     $statusBadge = "Inicia pronto";

@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $ahora = new DateTime();
     $bloqueado = false;
     $intentos = 0;
-
+            /*verificar si se puede resetear el conteo de intentos despues de un tiempo, para permitir que el usuario vuelva a intentar despues de un rato sin necesidad de esperar el bloqueo completo*/
     if ($usuario !== "") {
         $stmtIntento = $mysqli->prepare("SELECT intentos, bloqueado_hasta, actualizado_en FROM login_intentos WHERE usuario = ? AND ip = ? LIMIT 1");
         if ($stmtIntento) {
@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     }
                 }
 
-                $actualizadoRaw = $rowIntento["actualizado_en"] ?? null;
+                $actualizadoRaw = $rowIntento["actualizado_en"] ?? null;/*verificar si se puede resetear el conteo de intentos despues de un tiempo, para permitir que el usuario vuelva a intentar despues de un rato sin necesidad de esperar el bloqueo completo*/
                 if ($actualizadoRaw) {
                     $actualizado = new DateTime($actualizadoRaw);
                     $limite = (clone $ahora)->modify("-" . $ventanaMin . " minutes");
@@ -53,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
     }
-
+    
     if ($bloqueado) {
         // bloqueado por intentos
     } elseif ($usuario === "" || $contrasena === "") {
@@ -97,7 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 exit;
             }
         }
-
+    /*verificar si se puede resetear el conteo de intentos despues de un tiempo, para permitir que el usuario vuelva a intentar despues de un rato sin necesidad de esperar el bloqueo completo*/
         if ($usuario !== "") {
             $intentos += 1;
             $bloqueadoHasta = null;

@@ -2,6 +2,12 @@ const $ = (id) => document.getElementById(id);
 
 const baseText = { fontFamily: "Space Grotesk, sans-serif", fontSize: 12, color: "#2a2420" };
 const grid = { left: 36, right: 16, top: 24, bottom: 28 };
+const pink = {
+  primary: "#f06bb9",
+  soft: "#f7a8d7",
+  pale: "#fde1f0",
+  line: "#f3c2dd"
+};
 
 const charts = {
   line: echarts.init($("chart-line")),
@@ -17,7 +23,9 @@ function lineSeries(data) {
     smooth: true,
     symbol: "circle",
     symbolSize: 6,
-    lineStyle: { width: 2 }
+    lineStyle: { width: 2, color: pink.primary },
+    itemStyle: { color: pink.primary },
+    areaStyle: { color: pink.pale, opacity: 0.6 }
   };
 }
 
@@ -29,17 +37,18 @@ function renderCharts(data) {
   charts.line.setOption({
     textStyle: baseText,
     grid,
+    color: [pink.primary],
     xAxis: {
       type: "category",
       data: data.hours,
       boundaryGap: false,
-      axisLine: { lineStyle: { color: "#e2dad3" } },
+      axisLine: { lineStyle: { color: pink.line } },
       axisTick: { show: false }
     },
     yAxis: {
       type: "value",
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: "#efe7e0" } }
+      splitLine: { lineStyle: { color: pink.line } }
     },
     series: [lineSeries(data.bids)]
   });
@@ -47,10 +56,11 @@ function renderCharts(data) {
   charts.bar.setOption({
     textStyle: baseText,
     grid: { left: 36, right: 16, top: 24, bottom: 56 },
+    color: [pink.primary],
     xAxis: {
       type: "category",
       data: data.topProducts.map((p) => p.name),
-      axisLine: { lineStyle: { color: "#e2dad3" } },
+      axisLine: { lineStyle: { color: pink.line } },
       axisTick: { show: false },
       axisLabel: {
         interval: 0,
@@ -66,18 +76,19 @@ function renderCharts(data) {
     yAxis: {
       type: "value",
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: "#efe7e0" } }
+      splitLine: { lineStyle: { color: pink.line } }
     },
     series: [{
       type: "bar",
       data: data.topProducts.map((p) => p.value),
       barWidth: 24,
-      itemStyle: { borderRadius: [10, 10, 4, 4] }
+      itemStyle: { borderRadius: [10, 10, 4, 4], color: pink.primary }
     }]
   });
 
   charts.pie.setOption({
     textStyle: baseText,
+    color: [pink.primary, pink.soft, "#f7c6e1", "#ffd6e9"],
     series: [{
       type: "pie",
       radius: ["45%", "70%"],
@@ -95,15 +106,16 @@ function renderCharts(data) {
     textStyle: baseText,
     radar: {
       indicator: data.radar.labels.map((name) => ({ name, max: 100 })),
-      axisLine: { lineStyle: { color: "#e2dad3" } },
-      splitLine: { lineStyle: { color: "#efe7e0" } },
+      axisLine: { lineStyle: { color: pink.line } },
+      splitLine: { lineStyle: { color: pink.line } },
       splitArea: { areaStyle: { color: ["rgba(0,0,0,0)", "rgba(0,0,0,0)"] } }
     },
     series: [{
       type: "radar",
       data: [{ value: data.radar.values, name: "Rendimiento" }],
-      lineStyle: { width: 2 },
-      areaStyle: { opacity: 0.08 }
+      lineStyle: { width: 2, color: pink.primary },
+      itemStyle: { color: pink.primary },
+      areaStyle: { color: pink.pale, opacity: 0.5 }
     }]
   });
 }

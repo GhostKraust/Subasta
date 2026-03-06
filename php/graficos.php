@@ -89,7 +89,7 @@ if (!empty($_GET["data"])) {
   }
 
   $states = [];
-  $resultStates = $mysqli->query("SELECT estado, COUNT(*) AS total FROM productos GROUP BY estado");
+  $resultStates = $mysqli->query("SELECT estado, COUNT(*) AS total FROM productos WHERE estado IN ('activo', 'pausado') GROUP BY estado");
   if ($resultStates) {
     while ($row = $resultStates->fetch_assoc()) {
       $label = ucfirst((string) ($row["estado"] ?? ""));

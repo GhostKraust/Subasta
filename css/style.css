@@ -129,7 +129,7 @@ a {
 min-width: 170px;
     padding: 6px 14px;
     font-size: 0.85rem;
-background: linear-gradient(135deg, #ff66f2, #f77ff1);
+background: linear-gradient(140deg, #ff83fb, #eebff6);
 }
 
 .currency-label {
@@ -141,12 +141,13 @@ background: linear-gradient(135deg, #ff66f2, #f77ff1);
     border-radius: 999px;
     border: 1px solid var(--line);
     padding: 8px 36px 8px 14px;
-    background: var(--bg-soft);
+    background: white;
+    font-family: inherit;
     font-weight: 600;
     cursor: pointer;
 }
 
-.auth-card {
+.auth-card {    
     background: rgba(255, 255, 255, 0.78);
     border: 1px solid var(--line);
     border-radius: 28px;
@@ -167,10 +168,10 @@ background: linear-gradient(135deg, #ff66f2, #f77ff1);
     width: 46px;
     height: 46px;
     border-radius: 14px;
-background: linear-gradient(135deg, #ff66f2, #f77ff1);
+background: linear-gradient(140deg, #ff83fb, #eebff6);
     display: grid;
     place-items: center;
-    color: pa#ffffff;
+    color: white;
     font-weight: 800;
     letter-spacing: 0.02em;
 }
@@ -289,7 +290,7 @@ h1 {
       border-radius: 999px;
     padding: 12px 20px;
     border: 1px solid transparent;
-background: linear-gradient(135deg, #ff66f2, #f77ff1);
+background: linear-gradient(140deg, #ff83fb, #eebff6);
     color: #ffffff;
     font-weight: 700;
     cursor: pointer;
@@ -305,7 +306,7 @@ background: linear-gradient(135deg, #ff66f2, #f77ff1);
 
 .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 12px 24px rgb(255, 255, 255);
 }
 
 .link {
@@ -394,28 +395,62 @@ background: linear-gradient(135deg, #ff66f2, #f77ff1);
 
 .admin-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0 10px;
     font-size: 0.95rem;
+    table-layout: fixed;
+    min-width: 980px;
 }
 
 .admin-table th,
 .admin-table td {
     text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--line);
+    padding: 12px 14px;
+    border-bottom: none;
     vertical-align: middle;
 }
 
 .admin-table td {
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.4;
 }
 
 .admin-table thead th {
-    color: var(--muted);
+    color: #000000;
     font-weight: 700;
     font-size: 0.85rem;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 1;
+}
+
+.admin-table tbody tr {
+    box-shadow: 0 8px 18px rgba(28, 28, 28, 0.08);
+}
+
+.admin-table tbody td {
+    background: #ffffff;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-table tbody td:first-child {
+    border-left: 1px solid var(--line);
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+
+.admin-table tbody td:last-child {
+    border-right: 1px solid var(--line);
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.admin-table tbody tr:hover td {
+    background: #fdf8f2;
 }
 
 .thumb {
@@ -483,6 +518,33 @@ background: linear-gradient(135deg, #ff66f2, #f77ff1);
 
 .currency-line {
     white-space: nowrap;
+}
+
+.history-changes {
+    display: grid;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.history-changes strong {
+    color: var(--ink);
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.history-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 10px 0 18px;
+    align-items: end;
+}
+
+.history-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 

@@ -60,6 +60,27 @@ if ($checkHistTable && $checkHistTable->num_rows === 0) {
     );
 }
 
+$checkProdHistTable = $mysqli->query("SHOW TABLES LIKE 'historial_productos'");
+if ($checkProdHistTable && $checkProdHistTable->num_rows === 0) {
+    $mysqli->query(
+        "CREATE TABLE historial_productos (" .
+        "id INT NOT NULL AUTO_INCREMENT," .
+        "producto_id INT NOT NULL," .
+        "producto_nombre VARCHAR(255) DEFAULT NULL," .
+        "accion VARCHAR(30) NOT NULL," .
+        "usuario_id INT DEFAULT NULL," .
+        "usuario_nombre VARCHAR(100) DEFAULT NULL," .
+        "cambios LONGTEXT DEFAULT NULL," .
+        "ip VARCHAR(45) DEFAULT NULL," .
+        "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," .
+        "PRIMARY KEY (id)," .
+        "KEY idx_producto (producto_id)," .
+        "KEY idx_accion (accion)," .
+        "KEY idx_fecha (created_at)" .
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+    );
+}
+
 if ($checkHistTable && $checkHistTable->num_rows > 0) {
     $mysqli->query(
         "INSERT IGNORE INTO ganadores_historial (" .
@@ -78,15 +99,34 @@ if ($checkHistTable && $checkHistTable->num_rows > 0) {
             ") mf ON pu1.producto_id = mf.producto_id AND pu1.fecha_puja = mf.max_fecha" .
         ") w ON w.producto_id = p.id " .
         "LEFT JOIN ganadores_historial gh ON gh.producto_id = p.id AND gh.fecha_cierre = COALESCE(p.fecha_fin, w.fecha_puja) " .
-        "WHERE (p.estado = 'finalizado' OR (p.fecha_fin IS NOT NULL AND p.fecha_fin < NOW())) AND gh.id IS NULL"
+        "WHERE (p.estado = 'finalizado' OR (p.fecha_fin IS NOT NULL AND p.fecha_fin < DATE_SUB(NOW(), INTERVAL 2 DAY))) AND gh.id IS NULL"
     );
 }
 
 $checkFinColumn = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
 if ($checkFinColumn && $checkFinColumn->num_rows > 0) {
+    $resultToPause = $mysqli->query(
+        "SELECT id FROM productos " .
+        "WHERE estado = 'activo' AND fecha_fin IS NOT NULL AND fecha_fin < NOW()"
+    );
+    if ($resultToPause) {
+        while ($producto = $resultToPause->fetch_assoc()) {
+            $productoId = (int) ($producto["id"] ?? 0);
+            if ($productoId <= 0) {
+                continue;
+            }
+            $stmtPause = $mysqli->prepare("UPDATE productos SET estado = 'pausado' WHERE id = ?");
+            if ($stmtPause) {
+                $stmtPause->bind_param("i", $productoId);
+                $stmtPause->execute();
+                $stmtPause->close();
+            }
+        }
+    }
+
     $resultToClose = $mysqli->query(
         "SELECT id, nombre, categoria_id, fecha_fin FROM productos " .
-        "WHERE estado <> 'finalizado' AND fecha_fin IS NOT NULL AND fecha_fin < NOW()"
+        "WHERE estado = 'pausado' AND fecha_fin IS NOT NULL AND fecha_fin < DATE_SUB(NOW(), INTERVAL 2 DAY)"
     );
     if ($resultToClose) {
         while ($producto = $resultToClose->fetch_assoc()) {

@@ -66,19 +66,19 @@ if ($resultTop) {
 }
 
 $estadoActivas = 0;
-$estadoFinalizadas = 0;
+$estadoPausadas = 0;
 $estadoProximas = 0;
 if ($hasInicio || $hasFin) {
     $resultActivas = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'activo' AND (fecha_inicio IS NULL OR fecha_inicio <= NOW()) AND (fecha_fin IS NULL OR fecha_fin >= NOW())");
-    $resultFinal = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'finalizado' OR (fecha_fin IS NOT NULL AND fecha_fin < NOW())");
+    $resultPausadas = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'pausado'");
     $resultProx = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'activo' AND fecha_inicio IS NOT NULL AND fecha_inicio > NOW()");
     if ($resultActivas) {
         $row = $resultActivas->fetch_assoc();
         $estadoActivas = (int) ($row["total"] ?? 0);
     }
-    if ($resultFinal) {
-        $row = $resultFinal->fetch_assoc();
-        $estadoFinalizadas = (int) ($row["total"] ?? 0);
+    if ($resultPausadas) {
+        $row = $resultPausadas->fetch_assoc();
+        $estadoPausadas = (int) ($row["total"] ?? 0);
     }
     if ($resultProx) {
         $row = $resultProx->fetch_assoc();
@@ -86,14 +86,14 @@ if ($hasInicio || $hasFin) {
     }
 } else {
     $resultActivas = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'activo'");
-    $resultFinal = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'finalizado'");
+    $resultPausadas = $mysqli->query("SELECT COUNT(*) AS total FROM productos WHERE estado = 'pausado'");
     if ($resultActivas) {
         $row = $resultActivas->fetch_assoc();
         $estadoActivas = (int) ($row["total"] ?? 0);
     }
-    if ($resultFinal) {
-        $row = $resultFinal->fetch_assoc();
-        $estadoFinalizadas = (int) ($row["total"] ?? 0);
+    if ($resultPausadas) {
+        $row = $resultPausadas->fetch_assoc();
+        $estadoPausadas = (int) ($row["total"] ?? 0);
     }
 }
 
@@ -130,6 +130,7 @@ if ($resultPujas) {
         <div class="dash-actions">
             <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
             <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
+            <a class="btn btn-compact ghost" href="historial_productos.php">Historial</a>
             <a class="btn btn-compact ghost" href="productos.php">Nuevo producto</a>
             <a class="btn btn-compact ghost" href="panel.php">Panel</a>
             <a class="btn btn-compact" href="logout.php">Cerrar sesion</a>
@@ -199,8 +200,8 @@ if ($resultPujas) {
                         <div class="status-label">Activas</div>
                     </div>
                     <div class="status-card status-closed">
-                        <div class="status-value"><?php echo $estadoFinalizadas; ?></div>
-                        <div class="status-label">Finalizadas</div>
+                        <div class="status-value"><?php echo $estadoPausadas; ?></div>
+                        <div class="status-label">Pausadas</div>
                     </div>
                     <?php if ($estadoProximas > 0) { ?>
                         <div class="status-card status-next">

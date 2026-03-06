@@ -110,17 +110,18 @@ body.auth-page {
 }
 
 .card-status {
-    align-self: start;
+    align-self: anchor-center;
     justify-self: start;
     height: fit-content;
-    padding: 31px 64px 43px;
-    gap: 68px;
+    padding: 31px 110px 60px;
+    gap: 56px;
     align-content: start;
 
 }
 
 .card-status .card-title {
-    margin-bottom: 4px;
+    margin-bottom: -24px;
+    text-align: center; 
 }
 
 .card-categories {
@@ -139,7 +140,7 @@ body.auth-page {
     height: 160px;
     border-radius: 50%;
     position: relative;
-    background: linear-gradient(135deg, #ff66f2, #f77ff1);
+background: linear-gradient(140deg, #ff83fb, #eebff6);
 }
 
 .donut-center {
@@ -180,6 +181,7 @@ body.auth-page {
     font-weight: 700;
     font-size: 1.05rem;
     color: #2f3a4f;
+    text-align: center;
 }
 
 .chart {
@@ -205,8 +207,8 @@ body.auth-page {
 }
 
 .bar {
-    height: 100%;
-    background: linear-gradient(90deg, #f5a3c7, #f7c0d9);
+height: 100%;
+    background: linear-gradient(90deg, #ff8ef8, #ff8ef8);
     border-radius: 999px;
 }
 
@@ -369,11 +371,11 @@ body.auth-page {
 
 .status-label {
     font-size: 0.78rem;
-    color: #3f4b5d;
+    color: #ffffff;
 }
 
 .status-active {
-    background: linear-gradient(140deg, #ff83fb, #f6bfbf);
+    background: linear-gradient(140deg, #ff83fb, #eabff6);
     color: #ffffff;
 }
 
@@ -382,8 +384,8 @@ body.auth-page {
 }
 
 .status-closed {
-   background: linear-gradient(140deg, #ff83fb, #f6bfbf);
-    color: #3a2b32;
+background: linear-gradient(140deg, #ff83fb, #eebff6);
+    color: #ffffff;
 }
 
 .status-next {

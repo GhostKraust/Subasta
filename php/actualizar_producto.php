@@ -2,6 +2,7 @@
 require_once __DIR__ . "/auth.php";
 require_admin();
 require_once __DIR__ . "/../config/db.php";
+require_once __DIR__ . "/lib/historial_productos.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
@@ -73,6 +74,27 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$selectIncremento = $hasIncremento ? ", incremento_minimo" : "";
+$selectInicio = $hasInicio ? ", fecha_inicio" : "";
+$selectFin = $hasFin ? ", fecha_fin" : "";
+$stmtPrev = $mysqli->prepare(
+    "SELECT nombre, descripcion, imagen_url, categoria_id, estado, $precioColumn AS precio" .
+    "$selectIncremento$selectInicio$selectFin FROM productos WHERE id = ? LIMIT 1"
+);
+if (!$stmtPrev) {
+    http_response_code(500);
+    exit("No se pudo consultar el producto.");
+}
+$stmtPrev->bind_param("i", $id);
+$stmtPrev->execute();
+$resultPrev = $stmtPrev->get_result();
+$productoActual = $resultPrev ? $resultPrev->fetch_assoc() : null;
+$stmtPrev->close();
+if (!$productoActual) {
+    http_response_code(404);
+    exit("Producto no encontrado.");
+}
+
 $fechaInicio = $hasInicio ? str_replace("T", " ", $fechaInicioRaw) : null;
 $fechaFin = $hasFin ? str_replace("T", " ", $fechaFinRaw) : null;
 
@@ -141,19 +163,7 @@ if (isset($_FILES["imagen"]) && $_FILES["imagen"]["error"] !== UPLOAD_ERR_NO_FIL
 
     $imagenUrl = "uploads/productos/" . $filename;
 }
-
-$imagenAnterior = "";
-$stmtImg = $mysqli->prepare("SELECT imagen_url FROM productos WHERE id = ? LIMIT 1");
-if ($stmtImg) {
-    $stmtImg->bind_param("i", $id);
-    $stmtImg->execute();
-    $result = $stmtImg->get_result();
-    $row = $result ? $result->fetch_assoc() : null;
-    $stmtImg->close();
-    if ($row) {
-        $imagenAnterior = $row["imagen_url"] ?? "";
-    }
-}
+$imagenAnterior = $productoActual["imagen_url"] ?? "";
 
 if ($hasIncremento || $hasInicio || $hasFin) {
     if ($imagenUrl !== null) {
@@ -247,6 +257,56 @@ if (!$stmt->execute()) {
 }
 
 $stmt->close();
+
+function add_change(&$changes, $field, $before, $after)
+{
+    if ($before !== $after) {
+        $changes[$field] = ["before" => $before, "after" => $after];
+    }
+}
+
+$before = [
+    "nombre" => $productoActual["nombre"] ?? "",
+    "descripcion" => $productoActual["descripcion"] ?? "",
+    "imagen_url" => $productoActual["imagen_url"] ?? "",
+    "precio_inicial" => (float) ($productoActual["precio"] ?? 0),
+    "incremento_minimo" => $hasIncremento ? (float) ($productoActual["incremento_minimo"] ?? 0) : null,
+    "fecha_inicio" => $hasInicio ? ($productoActual["fecha_inicio"] ?? null) : null,
+    "fecha_fin" => $hasFin ? ($productoActual["fecha_fin"] ?? null) : null,
+    "categoria_id" => (int) ($productoActual["categoria_id"] ?? 0),
+    "estado" => $productoActual["estado"] ?? ""
+];
+$after = [
+    "nombre" => $nombre,
+    "descripcion" => $descripcion,
+    "imagen_url" => $imagenUrl !== null ? $imagenUrl : ($productoActual["imagen_url"] ?? ""),
+    "precio_inicial" => $precioInicial,
+    "incremento_minimo" => $hasIncremento ? $incrementoMinimo : null,
+    "fecha_inicio" => $hasInicio ? $fechaInicio : null,
+    "fecha_fin" => $hasFin ? $fechaFin : null,
+    "categoria_id" => $categoriaId,
+    "estado" => $estado
+];
+
+$changes = [];
+foreach ($before as $field => $oldValue) {
+    $newValue = $after[$field] ?? null;
+    add_change($changes, $field, $oldValue, $newValue);
+}
+
+if (!empty($changes)) {
+    $usuarioId = $_SESSION["admin_id"] ?? null;
+    $usuarioNombre = trim($_SESSION["admin_user"] ?? "");
+    log_producto_historial(
+        $mysqli,
+        "editar",
+        $id,
+        $after["nombre"],
+        $usuarioId,
+        $usuarioNombre,
+        ["changes" => $changes]
+    );
+}
 
 if ($imagenUrl !== null && $imagenAnterior !== "" && str_starts_with($imagenAnterior, "uploads/productos/")) {
     $path = __DIR__ . "/../" . $imagenAnterior;

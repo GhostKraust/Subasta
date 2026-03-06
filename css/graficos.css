@@ -77,10 +77,10 @@ body {
 
 .theme-btn-primary {
   border: none;
-  background: linear-gradient(135deg, #ff66f2, #f77ff1);
-  color: #ffffff;
-  padding: 11px 18px;
-  box-shadow: 0 12px 24px rgba(108, 136, 234, 0.25);
+    background: linear-gradient(135deg, #ffccfb, #ff6dde);
+    color: #ffffff;
+    padding: 11px 18px;
+    box-shadow: 0 12px 24px rgba(108, 136, 234, 0.25);
 }
 
 .theme-btn-primary:hover {
