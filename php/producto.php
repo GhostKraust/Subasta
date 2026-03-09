@@ -91,24 +91,22 @@ $ahora = new DateTime();
 $activoTiempo = ($inicio === null || $ahora >= $inicio) && ($fin === null || $ahora <= $fin);
 $estadoActual = ($producto["estado"] ?? "activo") === "activo" && $activoTiempo;
 
-$cierreTexto = "";
-$restanteTexto = "";
-$cierreUrgente = false;
-if ($fin !== null) {
-    $cierreTexto = $fin->format("d/m/Y H:i");
-    $secondsLeft = $fin->getTimestamp() - $ahora->getTimestamp();
-    if ($secondsLeft > 0) {
-        if ($secondsLeft < 3600) {
-            $restanteTexto = "Menos de 1 hora";
-            $cierreUrgente = true;
-        } elseif ($secondsLeft <= 86400) {
-            $hoursLeft = (int) ceil($secondsLeft / 3600);
-            $restanteTexto = "Faltan " . $hoursLeft . " horas";
-        } else {
-            $daysLeft = (int) ceil($secondsLeft / 86400);
-            $restanteTexto = "Faltan " . $daysLeft . " dias";
-        }
-    }
+$countdown = null;
+$interval = null;
+
+if ($inicio !== null && $ahora < $inicio) {
+    $interval = $ahora->diff($inicio);
+    $countdown = ["title" => "La subasta inicia en"];
+} elseif ($estadoActual && $fin !== null) {
+    $interval = $ahora->diff($fin);
+    $countdown = ["title" => "La subasta termina en"];
+}
+
+if ($interval) {
+    $countdown["values"] = [];
+    if ($interval->days > 0) $countdown["values"][] = ["value" => $interval->days, "label" => "días"];
+    if ($interval->h > 0 || $interval->days > 0) $countdown["values"][] = ["value" => $interval->h, "label" => "hrs"];
+    $countdown["values"][] = ["value" => $interval->i, "label" => "min"];
 }
 
 $pujas = [];
@@ -208,6 +206,10 @@ if (count($volverParams) > 0) {
                 <p class="text-slate-500 leading-relaxed"><?php echo htmlspecialchars($producto["descripcion"] ?? ""); ?></p>
                 <div class="flex flex-wrap gap-6">
                     <div>
+                        <div class="text-xs uppercase text-slate-400 font-semibold">Precio inicial</div>
+                        <div class="text-lg font-semibold text-slate-700 dark:text-slate-200">MXN $<?php echo number_format((float)($producto['precio'] ?? 0), 2); ?></div>
+                    </div>
+                    <div>
                         <div class="text-xs uppercase text-slate-400 font-semibold">Puja actual</div>
                         <div class="text-3xl font-bold text-secondary">MXN $<?php echo number_format($precioActual, 2); ?></div>
                     </div>
@@ -215,19 +217,6 @@ if (count($volverParams) > 0) {
                         <div>
                             <div class="text-xs uppercase text-slate-400 font-semibold">Minimo</div>
                             <div class="text-lg font-semibold text-slate-700 dark:text-slate-200">$<?php echo number_format($minimo, 2); ?></div>
-                        </div>
-                    <?php } ?>
-                    <?php if ($estadoActual && $cierreTexto !== "") { ?>
-                        <div class="cierre-badge<?php echo $cierreUrgente ? " cierre-urgente" : ""; ?>">
-                            <div class="text-xs uppercase text-slate-400 font-semibold">Cierre</div>
-                            <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                <?php echo htmlspecialchars($cierreTexto); ?>
-                            </div>
-                            <?php if ($restanteTexto !== "") { ?>
-                                <div class="text-xs text-slate-500">
-                                    <?php echo htmlspecialchars($restanteTexto); ?>
-                                </div>
-                            <?php } ?>
                         </div>
                     <?php } ?>
                 </div>
@@ -252,6 +241,20 @@ if (count($volverParams) > 0) {
                 <div class="text-xs uppercase tracking-widest text-slate-400">Pujar</div>
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Participa</h2>
             </div>
+            <?php if ($countdown !== null && !empty($countdown["values"])) { ?>
+                <div class="text-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+                    <h3 class="text-sm uppercase font-semibold text-slate-400 tracking-wider"><?php echo htmlspecialchars($countdown['title']); ?></h3>
+                    <div class="flex justify-center items-baseline gap-4 mt-2">
+                        <?php foreach($countdown['values'] as $item) { ?>
+                            <div>
+                                <div class="text-4xl font-bold text-primary"><?php echo htmlspecialchars($item['value']); ?></div>
+                                <div class="text-xs text-slate-500"><?php echo htmlspecialchars($item['label']); ?></div>
+                            </div>
+                        <?php } ?>
+                    </div>
+                </div>
+            <?php } ?>
+
             <?php if ($status === "ok") { ?>
                 <div class="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl px-4 py-3">
                     Tu oferta sea realizado
@@ -276,7 +279,12 @@ if (count($volverParams) > 0) {
                     </label>
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />
-                    <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto" type="number" />
+                    <div class="flex items-center gap-2">
+                        <input id="monto-puja-input" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary w-full" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto (mín. $<?php echo number_format($minimo, 0); ?>)" type="number" />
+                        <button type="button" id="use-min-bid-btn" data-minimo="<?php echo number_format($minimo, 2, '.', ''); ?>" class="flex-shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600">
+                            Mínimo
+                        </button>
+                    </div>
                     <button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" type="submit">
                         Pujar
                     </button>
@@ -292,10 +300,14 @@ if (count($volverParams) > 0) {
                     <?php } else { ?>
                         <?php foreach ($pujas as $puja) { ?>
                             <div class="flex items-center justify-between">
-                                <span class="truncate max-w-[60%]"><?php echo htmlspecialchars($puja["nombre_usuario"] ?? ""); ?></span>
+                                <?php
+                                    $esAnonimo = $hasOrigen && ($puja["origen"] ?? "") === "anonimo";
+                                    $nombreMostrado = $esAnonimo ? "Anonimo" : htmlspecialchars($puja["nombre_usuario"] ?? "");
+                                ?>
+                                <span class="truncate max-w-[60%]"><?php echo $nombreMostrado; ?></span>
                                 <span class="font-semibold">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></span>
                             </div>
-                            <?php if ($hasOrigen && !empty($puja["origen"])) { ?>
+                            <?php if ($hasOrigen && !empty($puja["origen"]) && !$esAnonimo) { ?>
                                 <div class="text-[10px] uppercase tracking-widest text-slate-400">
                                     <?php echo htmlspecialchars($puja["origen"]); ?>
                                 </div>
@@ -316,18 +328,25 @@ if (count($volverParams) > 0) {
             }
 
             function syncAnonimo() {
-                if (toggle.checked) {
-                    nombre.value = "";
-                    nombre.required = false;
-                    field.style.display = "none";
-                } else {
-                    nombre.required = true;
-                    field.style.display = "grid";
-                }
+                // El campo de nombre ahora es siempre visible y requerido.
+                // El checkbox solo actua como una bandera para el backend.
             }
 
             toggle.addEventListener("change", syncAnonimo);
             syncAnonimo();
+
+            var minBidBtn = document.getElementById("use-min-bid-btn");
+            var montoInput = document.getElementById("monto-puja-input");
+
+            if (minBidBtn && montoInput) {
+                minBidBtn.addEventListener("click", function() {
+                    var minimo = this.dataset.minimo;
+                    if (minimo) {
+                        montoInput.value = minimo;
+                        montoInput.focus();
+                    }
+                });
+            }
         })();
     </script>
 </body>

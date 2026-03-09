@@ -16,13 +16,9 @@ $categoriaFiltro = (int) ($_POST["categoria"] ?? 0);
 $ordenFiltro = trim($_POST["orden"] ?? "");
 $busqueda = trim($_POST["q"] ?? "");
 
-if ($productoId <= 0 || ($nombre === "" && !$anonimo) || $correo === "" || $telefono === "" || $monto <= 0) {
+if ($productoId <= 0 || $nombre === "" || $correo === "" || $telefono === "" || $monto <= 0) {
     header("Location: producto.php?id=" . $productoId . "&status=error");
     exit;
-}
-
-if ($anonimo) {
-    $nombre = "Anonimo";
 }
 
 $precioColumn = "predcio_inicial";
@@ -50,6 +46,12 @@ $hasFin = false;
 $checkFin = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
 if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
+}
+
+$hasOrigen = false;
+$checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
+if ($checkOrigen && $checkOrigen->num_rows > 0) {
+    $hasOrigen = true;
 }
 
 $producto = null;
@@ -105,13 +107,30 @@ if ($monto < $minimo) {
     exit;
 }
 
-$stmtInsert = $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja) VALUES (?, ?, ?, ?, ?, NOW())");
+$origenValue = $anonimo ? "anonimo" : null;
+
+$stmtInsert = null;
+if ($hasOrigen) {
+    $stmtInsert = $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja, origen) VALUES (?, ?, ?, ?, ?, NOW(), ?)");
+} else {
+    // Fallback: si la columna 'origen' no existe, debemos asegurar el anonimato
+    // sobrescribiendo el nombre. El admin no verá el nombre real en este caso.
+    if ($anonimo) {
+        $nombre = "Anónimo";
+    }
+    $stmtInsert = $mysqli->prepare("INSERT INTO pujas (producto_id, nombre_usuario, correo_usuario, telefono_usuario, monto_puja, fecha_puja) VALUES (?, ?, ?, ?, ?, NOW())");
+}
+
 if (!$stmtInsert) {
     header("Location: producto.php?id=" . $productoId . "&status=error");
     exit;
 }
 
-$stmtInsert->bind_param("isssd", $productoId, $nombre, $correo, $telefono, $monto);
+if ($hasOrigen) {
+    $stmtInsert->bind_param("isssds", $productoId, $nombre, $correo, $telefono, $monto, $origenValue);
+} else {
+    $stmtInsert->bind_param("isssd", $productoId, $nombre, $correo, $telefono, $monto);
+}
 if (!$stmtInsert->execute()) {
     $stmtInsert->close();
     header("Location: producto.php?id=" . $productoId . "&status=error");

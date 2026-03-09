@@ -133,7 +133,7 @@ if ($resultPujas) {
             <a class="btn btn-compact ghost" href="historial_productos.php">Historial</a>
             <a class="btn btn-compact ghost" href="productos.php">Nuevo producto</a>
             <a class="btn btn-compact ghost" href="panel.php">Panel</a>
-            <a class="btn btn-compact" href="logout.php">Cerrar sesion</a>
+            <a class="btn btn-compact btn-logout" href="logout.php">Cerrar sesion</a>
         </div>
     </header>
 

@@ -420,7 +420,7 @@ if ($resultPujas) {
                                     $postorNombre = trim((string) ($puja["nombre_usuario"] ?? ""));
                                     $correo = trim((string) ($puja["correo_usuario"] ?? ""));
                                     $telefono = trim((string) ($puja["telefono_usuario"] ?? ""));
-                                    $searchRaw = $productoNombre . " " . $postorNombre . " " . $correo . " " . $telefono;
+                                    $searchRaw = $productoNombre . " " . $postorNombre;
                                     $searchBlob = function_exists("mb_strtolower")
                                         ? mb_strtolower($searchRaw, "UTF-8")
                                         : strtolower($searchRaw);
@@ -544,28 +544,42 @@ if ($resultPujas) {
                 return;
             }
 
-            function updateCount(visibleCount, totalCount) {
+            const initialVisibleCount = 5;
+
+            function updateCount(visibleCount, totalCount, isSearching) {
                 if (!countLabel) {
                     return;
                 }
-                countLabel.textContent = "Mostrando " + visibleCount + " de " + totalCount + " pujas";
+                if (isSearching) {
+                    countLabel.textContent = "Mostrando " + visibleCount + " de " + totalCount + " pujas";
+                } else {
+                    countLabel.textContent = "Mostrando las " + Math.min(initialVisibleCount, totalCount) + " pujas más recientes de " + totalCount;
+                }
             }
 
             function filterRows() {
                 var term = searchInput.value.toLowerCase().trim();
                 var visible = 0;
-                rows.forEach(function (row) {
+                var isSearching = term !== "";
+
+                rows.forEach(function (row, index) {
                     var haystack = row.getAttribute("data-search") || "";
-                    var match = term !== "" && haystack.indexOf(term) !== -1;
+                    var match = false;
+
+                    if (isSearching) {
+                        match = haystack.indexOf(term) !== -1;
+                    } else {
+                        match = index < initialVisibleCount;
+                    }
+                    
                     row.style.display = match ? "" : "none";
                     if (match) {
                         visible++;
                     }
                 });
-                updateCount(visible, rows.length);
+                updateCount(visible, rows.length, isSearching);
             }
 
-            updateCount(0, rows.length);
             filterRows();
             searchInput.addEventListener("input", filterRows);
         })();

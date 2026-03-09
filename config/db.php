@@ -81,6 +81,8 @@ if ($checkProdHistTable && $checkProdHistTable->num_rows === 0) {
     );
 }
 
+function mantenerEstadoSubastas($mysqli) {
+    // Lógica para mover ganadores al historial
 if ($checkHistTable && $checkHistTable->num_rows > 0) {
     $mysqli->query(
         "INSERT IGNORE INTO ganadores_historial (" .
@@ -103,6 +105,7 @@ if ($checkHistTable && $checkHistTable->num_rows > 0) {
     );
 }
 
+    // Lógica para pausar o finalizar productos
 $checkFinColumn = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_fin'");
 if ($checkFinColumn && $checkFinColumn->num_rows > 0) {
     $resultToPause = $mysqli->query(
@@ -196,4 +199,5 @@ if ($checkFinColumn && $checkFinColumn->num_rows > 0) {
             }
         }
     }
+}
 }

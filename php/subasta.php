@@ -328,11 +328,11 @@ if ($resultProductos) {
                 </p>
                 <div class="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
                     <div>
-                        <span class="text-xs text-slate-400 uppercase font-semibold">Puja actual</span>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Precio inicial</span>
                         <div class="currency-stack text-secondary">
                             <?php foreach ($monedas as $code) { ?>
                                 <div class="currency-line">
-                                    <?php echo htmlspecialchars($code . " " . formatCurrency($precioActual, $code, $rates)); ?>
+                                    <?php echo htmlspecialchars($code . " " . formatCurrency((float)($producto['precio'] ?? 0), $code, $rates)); ?>
                                 </div>
                             <?php } ?>
                         </div>

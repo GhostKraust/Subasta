@@ -7,6 +7,12 @@
     --accent-2: #cbb992;
     --line: rgba(42, 39, 34, 0.16);
     --shadow: 0 24px 60px rgba(41, 35, 26, 0.16);
+        --pastel-pink: #ffc8dd;
+    --pastel-pink-dark: #ffafcc;
+    --pastel-blue: #a2d2ff;
+    --pastel-blue-dark: #8ecae6;
+    --pastel-purple: #cdb4db;
+    
 }
 
 * {
@@ -129,7 +135,7 @@ a {
 min-width: 170px;
     padding: 6px 14px;
     font-size: 0.85rem;
-background: linear-gradient(140deg, #ff83fb, #eebff6);
+background-color: var(--pastel-pink-dark)
 }
 
 .currency-label {
@@ -290,7 +296,7 @@ h1 {
       border-radius: 999px;
     padding: 12px 20px;
     border: 1px solid transparent;
-background: linear-gradient(140deg, #ff83fb, #eebff6);
+background: var(--pastel-pink-dark);
     color: #ffffff;
     font-weight: 700;
     cursor: pointer;

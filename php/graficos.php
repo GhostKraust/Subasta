@@ -196,6 +196,25 @@ if (!empty($_GET["data"])) {
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/graficos.css">
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    .btn-dashboard {
+        background: linear-gradient(135deg, #ffc8dd, #ffafcc);
+        color: #ffffff !important;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 10px 24px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        box-shadow: 0 8px 32px rgba(162, 210, 255, 0.1);
+    }
+    .btn-dashboard:hover {
+        background: linear-gradient(135deg, #a2d2ff, #8ecae6);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(162, 210, 255, 0.4);
+    }
+  </style>
 </head>
 <body>
   <div class="page">
@@ -206,7 +225,7 @@ if (!empty($_GET["data"])) {
         <p class="subtitle"></p>
       </div>
       <div class="theme-switch">
-        <a class="theme-btn theme-btn-primary" href="dashboard.php">Dashboard</a>
+        <a class="btn-dashboard" href="dashboard.php">Inicio</a>
       </div>
     </header>
 
@@ -283,6 +302,3 @@ if (!empty($_GET["data"])) {
 </body>
 
 </html>
-
-
-

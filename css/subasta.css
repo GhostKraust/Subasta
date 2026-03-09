@@ -14,7 +14,7 @@ body {
     background-color: var(--pasitos-pink);
     height: 70px;
     font-size: 18px;
-    padding-top: px;
+    padding-top: 0;
     padding-bottom: 28px;
     position: relative;
     z-index: 2;
