@@ -93,12 +93,14 @@ $estadoActual = ($producto["estado"] ?? "activo") === "activo" && $activoTiempo;
 
 $cierreTexto = "";
 $restanteTexto = "";
+$cierreUrgente = false;
 if ($fin !== null) {
     $cierreTexto = $fin->format("d/m/Y H:i");
     $secondsLeft = $fin->getTimestamp() - $ahora->getTimestamp();
     if ($secondsLeft > 0) {
         if ($secondsLeft < 3600) {
             $restanteTexto = "Menos de 1 hora";
+            $cierreUrgente = true;
         } elseif ($secondsLeft <= 86400) {
             $hoursLeft = (int) ceil($secondsLeft / 3600);
             $restanteTexto = "Faltan " . $hoursLeft . " horas";
@@ -216,7 +218,7 @@ if (count($volverParams) > 0) {
                         </div>
                     <?php } ?>
                     <?php if ($estadoActual && $cierreTexto !== "") { ?>
-                        <div>
+                        <div class="cierre-badge<?php echo $cierreUrgente ? " cierre-urgente" : ""; ?>">
                             <div class="text-xs uppercase text-slate-400 font-semibold">Cierre</div>
                             <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                 <?php echo htmlspecialchars($cierreTexto); ?>
@@ -233,7 +235,7 @@ if (count($volverParams) > 0) {
                     <div class="bg-slate-100 dark:bg-slate-800/60 text-slate-500 rounded-2xl px-4 py-3 text-sm">
                         <?php if (($producto["estado"] ?? "") === "pausado") { ?>
                             Esta subasta esta pausada.
-                        <?php } elseif ($fin !== null && $ahora > $fin) { ?>
+                        <?php } elseif (($producto["estado"] ?? "") === "finalizado" || ($fin !== null && $ahora > $fin)) { ?>
                             Esta subasta esta finalizada.
                         <?php } elseif ($inicio !== null && $ahora < $inicio) { ?>
                             Esta subasta inicia el <?php echo htmlspecialchars($inicio->format("d/m/Y H:i")); ?>.
@@ -265,7 +267,13 @@ if (count($volverParams) > 0) {
                     <input type="hidden" name="categoria" value="<?php echo (int) $categoriaFiltro; ?>" />
                     <input type="hidden" name="orden" value="<?php echo htmlspecialchars($ordenFiltro); ?>" />
                     <input type="hidden" name="q" value="<?php echo htmlspecialchars($busqueda); ?>" />
-                    <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
+                    <div id="anonimo-field" class="grid gap-2">
+                        <input id="nombre-usuario" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-slate-500">
+                        <input id="anonimo-toggle" type="checkbox" name="anonimo" value="1" />
+                        Puja anonima
+                    </label>
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />
                     <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto" type="number" />
@@ -298,5 +306,29 @@ if (count($volverParams) > 0) {
             </div>
         </aside>
     </main>
+    <script>
+        (function () {
+            var toggle = document.getElementById("anonimo-toggle");
+            var nombre = document.getElementById("nombre-usuario");
+            var field = document.getElementById("anonimo-field");
+            if (!toggle || !nombre || !field) {
+                return;
+            }
+
+            function syncAnonimo() {
+                if (toggle.checked) {
+                    nombre.value = "";
+                    nombre.required = false;
+                    field.style.display = "none";
+                } else {
+                    nombre.required = true;
+                    field.style.display = "grid";
+                }
+            }
+
+            toggle.addEventListener("change", syncAnonimo);
+            syncAnonimo();
+        })();
+    </script>
 </body>
 </html>

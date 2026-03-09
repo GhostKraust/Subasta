@@ -24,7 +24,7 @@ body {
 .top-bar .fw-bold {
     font-size: 1.4rem;
     font-weight: 1500;
-    color: #000000;
+    color: #ffffff;
     width: 400px;
 }
 /*tamaño de los iconos de la parte derecha de la barra superior*/
@@ -49,8 +49,8 @@ body {
 }
 
 .nav-link {
-    color: #111111 !important;
-    padding: 0.5rem 1rem !important;
+    color: #000000 !important;
+    padding: 0.4rem 0.6rem !important;
 }
 
 .nav-link:hover {
@@ -59,12 +59,12 @@ body {
 
 .navbar {
     position: relative;
-    z-index: 1;
+    z-index: 10;
 }
 
 .navbar-nav .nav-link.active {
     position: relative;
-    color: #111111 !important;
+    color: #000000 !important;
 }
 /*esta parte es la linea que aparece debajo del link activo en la barra de navegacion*/
 .navbar-nav .nav-link.active::after {
@@ -84,18 +84,41 @@ body {
     }
 
     .navbar-collapse {
-        flex-wrap: nowrap;
+       color: #0a8dd8;
     }
 
     .navbar-nav {
         flex-direction: row;
         flex-wrap: nowrap;
-        gap: 1.25rem;
+        gap: 0.6rem;
         white-space: nowrap;
     }
 
     .navbar-nav .nav-item {
         white-space: nowrap;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .navbar-toggler {
+        border: 1px solid #d1d5db;
+        padding: 0.4rem 0.6rem;
+        border-radius: 10px;
+    }
+
+    .navbar-toggler-icon {
+        width: auto;
+        height: auto;
+        background-image: none;
+    }
+
+    .navbar-collapse {
+        width: 100%;
+        background-color: #ffffff;
+        padding: 0.75rem 1rem;
+        margin-top: 0.5rem;
+        border-radius: 16px;
+        box-shadow: 0 14px 30px rgb(0, 0, 0);
     }
 }
 /*la parte del logo en el footer*/
@@ -112,14 +135,35 @@ body {
 
 .btn-donar {
     background-color: var(--pasitos-pink);
-    color: #000000;
+    color: #ffffff;
     border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    padding: 0.45rem 1.6rem;
     transition: 0.3s;
 }
 /*la parte de los botones de donar*/
 .btn-donar:hover {
     background-color: var(--pasitos-dark-pink);
     color: #ffffff;
+}
+
+.filter-bar {
+    padding: 0.6rem 0.9rem;
+}
+
+.filter-control {
+    font-size: 0.85rem !important;
+    padding: 0.4rem 0.75rem !important;
+    border-radius: 10px !important;
+}
+
+.btn-outline-small {
+    font-size: 0.85rem;
+    padding: 0.45rem 1.2rem;
+    border-width: 1px;
+    border-radius: 999px;
 }
 /*la parte de los botones de donar*/
 .footer-pink {
@@ -189,4 +233,31 @@ body {
     font-weight: 600;
     font-size: 0.8rem;
     color: #94a3b8;
+}
+
+.cierre-badge {
+    position: relative;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 216, 140, 0.35), rgba(255, 126, 126, 0.22));
+    border: 1px solid rgba(255, 164, 122, 0.45);
+}
+
+.cierre-urgente {
+    background: linear-gradient(135deg, rgba(255, 126, 126, 0.42), rgba(255, 60, 120, 0.2));
+    border-color: rgba(255, 92, 122, 0.65);
+    box-shadow: 0 10px 22px rgba(255, 102, 122, 0.25);
+    animation: cierrePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cierrePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 92, 122, 0.45);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 92, 122, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 92, 122, 0);
+    }
 }

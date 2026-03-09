@@ -40,7 +40,7 @@ function notificar_ganadores($mysqli, $config, $limit = 5)
             ") mf ON pu1.producto_id = mf.producto_id AND pu1.fecha_puja = mf.max_fecha" .
         ") w ON w.producto_id = p.id " .
         "LEFT JOIN ganadores_notificados n ON n.producto_id = p.id " .
-        "WHERE (p.estado = 'finalizado' OR (p.fecha_fin IS NOT NULL AND p.fecha_fin < NOW())) " .
+        "WHERE (p.estado = 'finalizado' OR (p.fecha_fin IS NOT NULL AND p.fecha_fin < DATE_SUB(NOW(), INTERVAL 2 DAY))) " .
         "AND n.producto_id IS NULL " .
         "AND w.correo_usuario IS NOT NULL AND w.correo_usuario <> '' " .
         "ORDER BY p.id DESC " .

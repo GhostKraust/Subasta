@@ -43,6 +43,12 @@ if ($checkRole && $checkRole->num_rows > 0) {
     $hasRole = true;
 }
 
+$hasOrigen = false;
+$checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
+if ($checkOrigen && $checkOrigen->num_rows > 0) {
+    $hasOrigen = true;
+}
+
 $monedas = ["MXN", "USD", "CAD"];
 $moneda = strtoupper($_GET["moneda"] ?? "MXN");
 if (!in_array($moneda, $monedas, true)) {
@@ -130,29 +136,11 @@ if (count($productos) > 0) {
 $admins = [];
 $currentAdminId = (int) ($_SESSION["admin_id"] ?? 0);
 $staffStatus = trim($_GET["staff"] ?? "");
-$estadoStatus = trim($_GET["estado"] ?? "");
+$pujaStatus = trim($_GET["puja"] ?? "");
 $isAdmin = is_admin();
 $toast = null;
 
-if (!empty($_GET["ok"])) {
-    $toast = [
-        "title" => "Productos",
-        "body" => "Producto guardado correctamente.",
-        "variant" => "success"
-    ];
-} elseif (!empty($_GET["deleted"])) {
-    $toast = [
-        "title" => "Productos",
-        "body" => "Producto eliminado correctamente.",
-        "variant" => "danger"
-    ];
-} elseif (!empty($_GET["updated"])) {
-    $toast = [
-        "title" => "Productos",
-        "body" => "Producto actualizado correctamente.",
-        "variant" => "success"
-    ];
-} elseif (!empty($_GET["presencial"])) {
+if (!empty($_GET["presencial"])) {
     $toast = [
         "title" => "Pujas",
         "body" => "Puja presencial registrada correctamente.",
@@ -196,29 +184,17 @@ if (!empty($_GET["ok"])) {
             "variant" => "danger"
         ];
     }
-} elseif ($estadoStatus !== "") {
-    if ($estadoStatus === "pausado") {
+} elseif ($pujaStatus !== "") {
+    if ($pujaStatus === "deleted") {
         $toast = [
-            "title" => "Productos",
-            "body" => "Producto pausado correctamente.",
-            "variant" => "warning"
-        ];
-    } elseif ($estadoStatus === "activo") {
-        $toast = [
-            "title" => "Productos",
-            "body" => "Producto reanudado correctamente.",
-            "variant" => "success"
-        ];
-    } elseif ($estadoStatus === "finalizado") {
-        $toast = [
-            "title" => "Productos",
-            "body" => "No puedes pausar un producto finalizado.",
+            "title" => "Pujas",
+            "body" => "Puja eliminada correctamente.",
             "variant" => "warning"
         ];
     } else {
         $toast = [
-            "title" => "Productos",
-            "body" => "No se pudo actualizar el estado.",
+            "title" => "Pujas",
+            "body" => "No se pudo eliminar la puja.",
             "variant" => "danger"
         ];
     }
@@ -229,20 +205,32 @@ if ($resultAdmins) {
         $admins[] = $row;
     }
 }
+
+$pujas = [];
+$selectOrigen = $hasOrigen ? ", pu.origen" : "";
+$queryPujas = "SELECT pu.id, pu.producto_id, p.nombre AS producto, pu.nombre_usuario, pu.correo_usuario, pu.telefono_usuario, pu.monto_puja, pu.fecha_puja$selectOrigen " .
+    "FROM pujas pu INNER JOIN productos p ON p.id = pu.producto_id " .
+    "ORDER BY pu.fecha_puja DESC LIMIT 30";
+$resultPujas = $mysqli->query($queryPujas);
+if ($resultPujas) {
+    while ($row = $resultPujas->fetch_assoc()) {
+        $pujas[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Administracion - Agregar producto</title>
+    <title>Administracion - Panel</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../css/style.css" rel="stylesheet" />
 </head>
-<body class="auth-page">
+<body class="auth-page panel-page">
     <?php if ($toast) { ?>
         <div class="toast-container position-fixed top-0 end-0 p-3">
             <div id="statusToast" class="toast toast-pink" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
@@ -261,6 +249,7 @@ if ($resultAdmins) {
         <div class="panel-actions">
             <a class="btn btn-compact ghost" href="subasta.php">Volver a subasta</a>
             <?php if ($isAdmin) { ?>
+                <a class="btn btn-compact ghost" href="productos.php">Productos</a>
                 <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
                 <a class="btn btn-compact" href="dashboard.php">Ir al dashboard</a>
             <?php } ?>
@@ -275,131 +264,6 @@ if ($resultAdmins) {
                 <?php } ?>
             </select>
         </form>
-
-        <section class="auth-card admin-products">
-                <div class="section-header">
-                <h2 class="section-title">Productos existentes</h2>
-                <div class="action-row">
-                    <a class="btn btn-small btn-outline" href="export_productos.php?format=excel">Exportar Excel</a>
-                    <a class="btn btn-small btn-outline" href="export_productos.php?format=pdf" target="_blank" rel="noopener">Exportar PDF</a>
-                </div>
-            </div>
-            <div class="table-wrap">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Imagen</th>
-                            <th>Producto</th>
-                            <th>Categoria</th>
-                            <th>Precio inicial</th>
-                            <?php if ($hasIncremento) { ?>
-                                <th>Incremento</th>
-                            <?php } ?>
-                            <th>Estado</th>
-                            <th>Ganador</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (count($productos) === 0) { ?>
-                            <tr>
-                                <td colspan="<?php echo $hasIncremento ? 8 : 7; ?>">No hay productos registrados.</td>
-                            </tr>
-                        <?php } else { ?>
-                            <?php foreach ($productos as $producto) { ?>
-                                <?php
-                                    $img = $producto["imagen_url"] ?? "";
-                                    if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
-                                        $img = "../" . $img;
-                                    }
-                                ?>
-                                <tr>
-                                    <td>
-                                        <?php if ($img !== "") { ?>
-                                            <img class="thumb" src="<?php echo htmlspecialchars($img); ?>" alt="" />
-                                        <?php } ?>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($producto["nombre"] ?? ""); ?></td>
-                                    <td><?php echo htmlspecialchars($producto["categoria"] ?? "Sin categoria"); ?></td>
-                                    <td>
-                                        <div class="currency-stack">
-                                            <?php foreach ($monedas as $code) { ?>
-                                                <div class="currency-line">
-                                                    <?php echo htmlspecialchars($code . " " . formatCurrency((float) $producto["precio"], $code, $rates)); ?>
-                                                </div>
-                                            <?php } ?>
-                                        </div>
-                                    </td>
-                                    <?php if ($hasIncremento) { ?>
-                                        <td>
-                                            <div class="currency-stack">
-                                                <?php foreach ($monedas as $code) { ?>
-                                                    <div class="currency-line">
-                                                        <?php echo htmlspecialchars($code . " " . formatCurrency((float) ($producto["incremento_minimo"] ?? 0), $code, $rates)); ?>
-                                                    </div>
-                                                <?php } ?>
-                                            </div>
-                                        </td>
-                                    <?php } ?>
-                                    <td><span class="status-tag"><?php echo htmlspecialchars($producto["estado"] ?? ""); ?></span></td>
-                                    <td>
-                                        <?php if (($producto["estado"] ?? "") === "finalizado") { ?>
-                                            <?php $ganador = $ganadores[(int) $producto["id"]] ?? null; ?>
-                                            <?php if ($ganador) { ?>
-                                                <div class="winner">
-                                                    <div class="winner-name"><?php echo htmlspecialchars($ganador["nombre_usuario"] ?? ""); ?></div>
-                                                    <div class="winner-meta"><?php echo htmlspecialchars($ganador["correo_usuario"] ?? ""); ?></div>
-                                                    <div class="winner-meta"><?php echo htmlspecialchars($ganador["telefono_usuario"] ?? ""); ?></div>
-                                                    <div class="winner-amount">
-                                                        <div class="currency-stack">
-                                                            <?php foreach ($monedas as $code) { ?>
-                                                                <div class="currency-line">
-                                                                    <?php echo htmlspecialchars($code . " " . formatCurrency((float) ($ganador["monto_puja"] ?? 0), $code, $rates)); ?>
-                                                                </div>
-                                                            <?php } ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            <?php } else { ?>
-                                                <span class="text-xs text-slate-400">Sin pujas</span>
-                                            <?php } ?>
-                                        <?php } else { ?>
-                                            <span class="text-xs text-slate-400">-</span>
-                                        <?php } ?>
-                                    </td>
-                                    <td>
-                                        <div class="action-row">
-                                            <?php if ($isAdmin) { ?>
-                                                <?php if (($producto["estado"] ?? "") === "activo") { ?>
-                                                    <form action="cambiar_estado_producto.php" method="post" onsubmit="return confirm('Quieres pausar este producto?');">
-                                                        <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
-                                                        <input type="hidden" name="estado" value="pausado" />
-                                                        <button class="btn btn-small btn-outline" type="submit">Pausar</button>
-                                                    </form>
-                                                <?php } elseif (($producto["estado"] ?? "") === "pausado") { ?>
-                                                    <form action="cambiar_estado_producto.php" method="post" onsubmit="return confirm('Quieres reanudar este producto?');">
-                                                        <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
-                                                        <input type="hidden" name="estado" value="activo" />
-                                                        <button class="btn btn-small btn-outline" type="submit">Reanudar</button>
-                                                    </form>
-                                                <?php } ?>
-                                                <a class="btn btn-small btn-outline" href="editar_producto.php?id=<?php echo (int) $producto["id"]; ?>">Editar</a>
-                                                <form action="eliminar_producto.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este producto?');">
-                                                    <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
-                                                    <button class="btn btn-small" type="submit">Eliminar</button>
-                                                </form>
-                                            <?php } else { ?>
-                                                <span class="field-hint">Solo admin</span>
-                                            <?php } ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php } ?>
-                        <?php } ?>
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
         <?php if ($isAdmin) { ?>
             <section class="auth-card admin-staff">
@@ -520,68 +384,74 @@ if ($resultAdmins) {
             </form>
         </section>
 
-        <section class="auth-card admin-new">
-            <div class="auth-brand">
-                <div class="brand-mark">A</div>
-                <div>
-                    <div class="brand-name">Administracion</div>
-                    <div class="brand-tag">Agregar producto</div>
-                </div>
+        <section class="auth-card admin-bids">
+            <div class="section-header">
+                <h2 class="section-title">Pujas recientes</h2>
+                <p class="lead">Administra ofertas invalidas o fuera de lugar.</p>
             </div>
-            <h1>Nuevo producto</h1>
-            <p class="lead">Completa los datos para publicar una nueva subasta.</p>
-            <form class="auth-form" action="guardar_producto.php" method="post" enctype="multipart/form-data">
+            <form class="auth-form" onsubmit="return false;">
                 <label class="field">
-                    <span>Nombre del producto</span>
-                    <input name="nombre" type="text" required placeholder="Ej. Paquete de viaje" />
+                    <span>Buscar por producto o postor</span>
+                    <input id="pujas-search" type="text" placeholder="Ej. Rubi Rosa o Juan" autocomplete="off" />
+                    <small class="field-hint" id="pujas-count"></small>
                 </label>
-                <label class="field">
-                    <span>Descripcion</span>
-                    <input name="descripcion" type="text" required placeholder="Breve descripcion" />
-                </label>
-                <label class="field">
-                    <span>Imagen del producto</span>
-                    <input name="imagen" type="file" accept="image/*" required />
-                    <small class="field-hint">Se subira al servidor y se guardara en la base de datos.</small>
-                </label>
-                <label class="field">
-                    <span>Precio inicial</span>
-                    <input name="precio_inicial" type="number" min="0" step="0.01" required placeholder="800" />
-                </label>
-                <label class="field">
-                    <span>Incremento minimo</span>
-                    <input name="incremento_minimo" type="number" min="1" step="1" required placeholder="100" />
-                    <?php if (!$hasIncremento) { ?>
-                        <small class="field-hint">Agrega la columna incremento_minimo en la tabla productos.</small>
-                    <?php } ?>
-                </label>
-                <?php if ($hasInicio) { ?>
-                    <label class="field">
-                        <span>Fecha y hora de inicio</span>
-                        <input name="fecha_inicio" type="datetime-local" required />
-                    </label>
-                <?php } ?>
-                <?php if ($hasFin) { ?>
-                    <label class="field">
-                        <span>Fecha y hora de fin</span>
-                        <input name="fecha_fin" type="datetime-local" required />
-                    </label>
-                <?php } ?>
-                <label class="field">
-                    <span>Categoria</span>
-                    <select name="categoria_id" required>
-                        <option value="" disabled selected>Selecciona una categoria</option>
-                        <?php foreach ($categorias as $categoria) { ?>
-                            <option value="<?php echo (int) $categoria["id"]; ?>">
-                                <?php echo htmlspecialchars($categoria["nombre"]); ?>
-                            </option>
-                        <?php } ?>
-                    </select>
-                </label>
-                <button class="btn" type="submit">Guardar producto</button>
             </form>
-            <div class="switch">
-                <a class="link" href="subasta.php">Volver a subasta</a>
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Postor</th>
+                            <th>Contacto</th>
+                            <th>Monto</th>
+                            <th><?php echo $hasOrigen ? "Origen" : "Fecha"; ?></th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (count($pujas) === 0) { ?>
+                            <tr>
+                                <td colspan="6">No hay pujas registradas.</td>
+                            </tr>
+                        <?php } else { ?>
+                            <?php foreach ($pujas as $puja) { ?>
+                                <?php
+                                    $productoNombre = trim((string) ($puja["producto"] ?? ""));
+                                    $postorNombre = trim((string) ($puja["nombre_usuario"] ?? ""));
+                                    $correo = trim((string) ($puja["correo_usuario"] ?? ""));
+                                    $telefono = trim((string) ($puja["telefono_usuario"] ?? ""));
+                                    $searchRaw = $productoNombre . " " . $postorNombre . " " . $correo . " " . $telefono;
+                                    $searchBlob = function_exists("mb_strtolower")
+                                        ? mb_strtolower($searchRaw, "UTF-8")
+                                        : strtolower($searchRaw);
+                                ?>
+                                <tr data-search="<?php echo htmlspecialchars($searchBlob); ?>">
+                                    <td><?php echo htmlspecialchars($productoNombre); ?></td>
+                                    <td><?php echo htmlspecialchars($postorNombre); ?></td>
+                                    <td>
+                                        <div class="text-xs text-slate-500"><?php echo htmlspecialchars($puja["correo_usuario"] ?? ""); ?></div>
+                                        <div class="text-xs text-slate-500"><?php echo htmlspecialchars($puja["telefono_usuario"] ?? ""); ?></div>
+                                    </td>
+                                    <td>$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></td>
+                                    <td>
+                                        <?php if ($hasOrigen) { ?>
+                                            <?php echo htmlspecialchars($puja["origen"] ?? "-"); ?>
+                                        <?php } else { ?>
+                                            <?php echo htmlspecialchars(date("d/m/Y H:i", strtotime($puja["fecha_puja"] ?? ""))); ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td>
+                                        <form action="eliminar_puja.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar esta puja?');">
+                                            <input type="hidden" name="id" value="<?php echo (int) ($puja["id"] ?? 0); ?>" />
+                                            <input type="hidden" name="moneda" value="<?php echo htmlspecialchars($moneda); ?>" />
+                                            <button class="btn btn-small" type="submit">Eliminar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        <?php } ?>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -662,6 +532,42 @@ if ($resultAdmins) {
             select.addEventListener("change", updateMinimo);
             filterOptions();
             updateMinimo();
+        })();
+    </script>
+    <script>
+        (function () {
+            var searchInput = document.getElementById("pujas-search");
+            var countLabel = document.getElementById("pujas-count");
+            var table = searchInput ? searchInput.closest("section") : null;
+            var rows = table ? table.querySelectorAll("tbody tr[data-search]") : [];
+            if (!searchInput || rows.length === 0) {
+                return;
+            }
+
+            function updateCount(visibleCount, totalCount) {
+                if (!countLabel) {
+                    return;
+                }
+                countLabel.textContent = "Mostrando " + visibleCount + " de " + totalCount + " pujas";
+            }
+
+            function filterRows() {
+                var term = searchInput.value.toLowerCase().trim();
+                var visible = 0;
+                rows.forEach(function (row) {
+                    var haystack = row.getAttribute("data-search") || "";
+                    var match = term !== "" && haystack.indexOf(term) !== -1;
+                    row.style.display = match ? "" : "none";
+                    if (match) {
+                        visible++;
+                    }
+                });
+                updateCount(visible, rows.length);
+            }
+
+            updateCount(0, rows.length);
+            filterRows();
+            searchInput.addEventListener("input", filterRows);
         })();
     </script>
 </body>

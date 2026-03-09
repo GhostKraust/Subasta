@@ -82,10 +82,7 @@ $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
-$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo','finalizado')";
-if ($hasFin) {
-    $queryProductos .= " AND (p.fecha_fin IS NULL OR p.fecha_fin >= DATE_SUB(NOW(), INTERVAL 2 DAY))";
-}
+$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo', 'pausado')";
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
@@ -116,7 +113,7 @@ if ($resultProductos) {
 <html lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Charity Auction - Pasitos de Luz / Casa Connor</title>
+<title>Subasta-Pasitos de Luz-Casa Connor</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
@@ -165,14 +162,10 @@ if ($resultProductos) {
         <div class="container-fluid px-4">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <img src="../Imagenes/logo_pasitos-removebg-preview.png" alt="Pasitos de Luz" class="me-2 logo-pasitos">
-                <img src="../Imagenes/logo_casa_connor.png" alt="Casa Connor" height="55">
+                <img src="../Imagenes/connor29.png" alt="Casa Connor" height="55">
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto fw-semibold" style="font-size: 0.95rem;">
                     <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">About Us <i class="bi bi-chevron-down small"></i></a></li>
@@ -219,10 +212,10 @@ if ($resultProductos) {
 </div>
 <?php } ?>
 <div class="container mx-auto px-6 mt-8">
-<form method="get" class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+<form method="get" class="filter-bar flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
     <div class="flex items-center gap-4">
         <span class="font-medium text-slate-500">Filter by:</span>
-        <select name="categoria" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+        <select name="categoria" class="filter-control bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
             <option value="0">Todas las categorias</option>
             <?php foreach ($categorias as $categoria) { ?>
                 <option value="<?php echo (int) $categoria["id"]; ?>" <?php echo ((int) $categoriaFiltro === (int) $categoria["id"]) ? "selected" : ""; ?>>
@@ -230,7 +223,7 @@ if ($resultProductos) {
                 </option>
             <?php } ?>
         </select>
-        <select name="orden" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
+        <select name="orden" class="filter-control bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 focus:ring-primary" onchange="this.form.submit()">
             <option value="">Ordenar</option>
             <option value="precio_asc" <?php echo $ordenFiltro === "precio_asc" ? "selected" : ""; ?>>Price: Low to High</option>
             <option value="precio_desc" <?php echo $ordenFiltro === "precio_desc" ? "selected" : ""; ?>>Price: High to Low</option>
@@ -238,7 +231,7 @@ if ($resultProductos) {
         </select>
     </div>
     <div class="relative w-full md:w-64">
-        <input name="q" value="<?php echo htmlspecialchars($busqueda); ?>" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
+        <input name="q" value="<?php echo htmlspecialchars($busqueda); ?>" class="filter-control w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-primary" placeholder="Search items..." type="text"/>
         <span class="material-icons absolute right-3 top-2 text-slate-400">search</span>
     </div>
 </form>
@@ -283,7 +276,9 @@ if ($resultProductos) {
             $statusBadge = "";
             $tiempoRestanteTexto = "";
             if (!$estadoActual) {
-                if ($fin !== null && $ahora > $fin) {
+                if (($producto["estado"] ?? "") === "pausado") {
+                    $statusBadge = "Pausado";
+                } elseif ($fin !== null && $ahora > $fin) {
                     $statusBadge = "Finalizado";
                 } elseif ($inicio !== null && $ahora < $inicio) {
                     $statusBadge = "Inicia pronto";
@@ -352,7 +347,7 @@ if ($resultProductos) {
 <?php } ?>
 </div>
 <div class="mt-16 flex justify-center">
-<button class="flex items-center gap-2 px-8 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-full transition-all">
+<button class="btn-outline-small flex items-center gap-2 px-8 py-3 border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold rounded-full transition-all">
                 Load More Items <span class="material-icons">refresh</span>
 </button>
 </div>
@@ -429,5 +424,20 @@ if ($resultProductos) {
         </div>
     </footer>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var toggler = document.querySelector(".navbar-toggler");
+        var collapse = document.getElementById("navbarNav");
+        if (!toggler || !collapse) {
+            return;
+        }
+
+        toggler.addEventListener("click", function (event) {
+            event.preventDefault();
+            collapse.classList.toggle("show");
+            toggler.setAttribute("aria-expanded", collapse.classList.contains("show") ? "true" : "false");
+        });
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body></html>
