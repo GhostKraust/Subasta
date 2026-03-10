@@ -78,7 +78,7 @@ function display_value($value)
     <main class="auth admin-layout">
         <div class="panel-actions">
             <a class="btn btn-compact ghost" href="productos.php">Volver a productos</a>
-            <a class="btn btn-compact ghost" href="dashboard.php">Dashboard</a>
+            <a class="btn btn-compact ghost" href="dashboard.php">Inicio</a>
         </div>
         <section class="auth-card admin-products">
             <div class="section-header">

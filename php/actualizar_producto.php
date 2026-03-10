@@ -122,46 +122,43 @@ if ($hasInicio && $hasFin) {
 }
 
 $imagenUrl = null;
-if (isset($_FILES["imagen"]) && $_FILES["imagen"]["error"] !== UPLOAD_ERR_NO_FILE) {
-    if ($_FILES["imagen"]["error"] !== UPLOAD_ERR_OK) {
-        http_response_code(400);
-        exit("Error al subir imagen.");
-    }
-
+if (isset($_FILES["imagen"]) && !empty($_FILES["imagen"]["name"][0])) {
     $maxSize = 5 * 1024 * 1024;
-    if ($_FILES["imagen"]["size"] > $maxSize) {
-        http_response_code(400);
-        exit("La imagen supera el tamano permitido.");
-    }
-
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime = $finfo->file($_FILES["imagen"]["tmp_name"]);
     $allowed = [
         "image/jpeg" => "jpg",
         "image/png" => "png",
         "image/webp" => "webp"
     ];
-
-    if (!isset($allowed[$mime])) {
-        http_response_code(400);
-        exit("Formato de imagen no permitido.");
-    }
-
-    $ext = $allowed[$mime];
     $uploadDir = __DIR__ . "/../uploads/productos";
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
         http_response_code(500);
-        exit("No se pudo crear la carpeta de subida.");
+        exit("No se pudo crear carpeta.");
     }
 
-    $filename = "producto_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "." . $ext;
-    $targetPath = $uploadDir . "/" . $filename;
-    if (!move_uploaded_file($_FILES["imagen"]["tmp_name"], $targetPath)) {
-        http_response_code(500);
-        exit("No se pudo guardar la imagen.");
+    $imagenesGuardadas = [];
+    $files = $_FILES["imagen"];
+    $count = count($files["name"]);
+
+    for ($i = 0; $i < $count; $i++) {
+        if ($files["error"][$i] !== UPLOAD_ERR_OK) continue;
+        if ($files["size"][$i] > $maxSize) continue;
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($files["tmp_name"][$i]);
+        if (!isset($allowed[$mime])) continue;
+
+        $ext = $allowed[$mime];
+        $filename = "producto_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "_" . $i . "." . $ext;
+        $targetPath = $uploadDir . "/" . $filename;
+
+        if (move_uploaded_file($files["tmp_name"][$i], $targetPath)) {
+            $imagenesGuardadas[] = "uploads/productos/" . $filename;
+        }
     }
 
-    $imagenUrl = "uploads/productos/" . $filename;
+    if (!empty($imagenesGuardadas)) {
+        $imagenUrl = count($imagenesGuardadas) > 1 ? json_encode($imagenesGuardadas) : $imagenesGuardadas[0];
+    }
 }
 $imagenAnterior = $productoActual["imagen_url"] ?? "";
 
@@ -309,9 +306,15 @@ if (!empty($changes)) {
 }
 
 if ($imagenUrl !== null && $imagenAnterior !== "" && str_starts_with($imagenAnterior, "uploads/productos/")) {
-    $path = __DIR__ . "/../" . $imagenAnterior;
-    if (is_file($path)) {
-        unlink($path);
+    // Intentar borrar las anteriores, ya sea 1 o JSON
+    $antiguas = json_decode($imagenAnterior, true);
+    if (!is_array($antiguas)) $antiguas = [$imagenAnterior];
+    
+    foreach($antiguas as $pathAntigua) {
+        if (str_starts_with($pathAntigua, "uploads/productos/")) {
+            $fullPath = __DIR__ . "/../" . $pathAntigua;
+            if (is_file($fullPath)) unlink($fullPath);
+        }
     }
 }
 

@@ -21,45 +21,54 @@ if ($nombre === "" || $descripcion === "" || $precioInicial <= 0 || $categoriaId
     exit("Faltan datos requeridos.");
 }
 
-if (!isset($_FILES["imagen"]) || $_FILES["imagen"]["error"] !== UPLOAD_ERR_OK) {
+if (!isset($_FILES["imagen"]) || empty($_FILES["imagen"]["name"][0])) {
     http_response_code(400);
     exit("Error al subir imagen.");
 }
 
 $maxSize = 5 * 1024 * 1024;
-if ($_FILES["imagen"]["size"] > $maxSize) {
-    http_response_code(400);
-    exit("La imagen supera el tamano permitido.");
-}
-
-$finfo = new finfo(FILEINFO_MIME_TYPE);
-$mime = $finfo->file($_FILES["imagen"]["tmp_name"]);
 $allowed = [
     "image/jpeg" => "jpg",
     "image/png" => "png",
     "image/webp" => "webp"
 ];
 
-if (!isset($allowed[$mime])) {
-    http_response_code(400);
-    exit("Formato de imagen no permitido.");
-}
-
-$ext = $allowed[$mime];
 $uploadDir = __DIR__ . "/../uploads/productos";
 if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
     http_response_code(500);
     exit("No se pudo crear la carpeta de subida.");
 }
 
-$filename = "producto_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "." . $ext;
-$targetPath = $uploadDir . "/" . $filename;
-if (!move_uploaded_file($_FILES["imagen"]["tmp_name"], $targetPath)) {
-    http_response_code(500);
-    exit("No se pudo guardar la imagen.");
+$imagenesGuardadas = [];
+$files = $_FILES["imagen"];
+$count = count($files["name"]);
+
+for ($i = 0; $i < $count; $i++) {
+    if ($files["error"][$i] !== UPLOAD_ERR_OK) continue;
+    if ($files["size"][$i] > $maxSize) continue; // Skip too large
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($files["tmp_name"][$i]);
+    
+    if (!isset($allowed[$mime])) continue; // Skip invalid format
+
+    $ext = $allowed[$mime];
+    $filename = "producto_" . date("Ymd_His") . "_" . bin2hex(random_bytes(4)) . "_" . $i . "." . $ext;
+    $targetPath = $uploadDir . "/" . $filename;
+
+    if (move_uploaded_file($files["tmp_name"][$i], $targetPath)) {
+        $imagenesGuardadas[] = "uploads/productos/" . $filename;
+    }
 }
 
-$imagenUrl = "uploads/productos/" . $filename;
+if (empty($imagenesGuardadas)) {
+    http_response_code(500);
+    exit("No se pudo guardar ninguna imagen valida.");
+}
+
+// Guardar como JSON si son varias, o string si es una (por compatibilidad o preferencia, pero JSON es mejor)
+// Para mantener compatibilidad simple, si es 1 guardamos string, si son mas JSON.
+$imagenUrl = count($imagenesGuardadas) > 1 ? json_encode($imagenesGuardadas) : $imagenesGuardadas[0];
 
  $stmtCategoria = $mysqli->prepare("SELECT id FROM categorias WHERE id = ? LIMIT 1");
  if ($stmtCategoria) {

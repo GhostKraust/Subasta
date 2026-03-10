@@ -3,8 +3,6 @@ require_once __DIR__ . "/auth.php";
 require_admin();
 require_once __DIR__ . "/../config/db.php";
 
-$hasFin = true;
-
 $categorias = [];
 $resultCategorias = $mysqli->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC");
 if ($resultCategorias) {
@@ -16,98 +14,116 @@ if ($resultCategorias) {
 $fromRaw = trim($_GET["from"] ?? "");
 $toRaw = trim($_GET["to"] ?? "");
 $categoriaFiltro = (int) ($_GET["categoria"] ?? 0);
-
-$fromDate = null;
-$toDate = null;
-if ($fromRaw !== "") {
-    $parsed = DateTime::createFromFormat("Y-m-d", $fromRaw);
-    if ($parsed) {
-        $fromDate = $parsed;
-    }
-}
-if ($toRaw !== "") {
-    $parsed = DateTime::createFromFormat("Y-m-d", $toRaw);
-    if ($parsed) {
-        $toDate = $parsed;
-    }
-}
-if ($fromDate && $toDate && $fromDate > $toDate) {
-    $temp = $fromDate;
-    $fromDate = $toDate;
-    $toDate = $temp;
-}
-
-$fromSql = $fromDate ? $fromDate->format("Y-m-d 00:00:00") : "";
-$toSql = $toDate ? $toDate->format("Y-m-d 23:59:59") : "";
+$productoFiltro = trim($_GET["producto"] ?? "");
+$participanteFiltro = trim($_GET["participante"] ?? "");
 
 // Paginacion
 $limit = 4;
 $page = max(1, (int) ($_GET["page"] ?? 1));
 
-$where = "WHERE 1=1";
+$fromDate = null;
+$toDate = null;
+if ($fromRaw !== "") {
+    $parsed = DateTime::createFromFormat("Y-m-d", $fromRaw);
+    if ($parsed) $fromDate = $parsed;
+}
+if ($toRaw !== "") {
+    $parsed = DateTime::createFromFormat("Y-m-d", $toRaw);
+    if ($parsed) $toDate = $parsed;
+}
+if ($fromDate && $toDate && $fromDate > $toDate) {
+    list($fromDate, $toDate) = [$toDate, $fromDate];
+}
+
+$fromSql = $fromDate ? $fromDate->format("Y-m-d 00:00:00") : "";
+$toSql = $toDate ? $toDate->format("Y-m-d 23:59:59") : "";
+
+$baseQuery = "FROM pujas pu
+    JOIN productos p ON pu.producto_id = p.id
+    LEFT JOIN categorias c ON p.categoria_id = c.id
+    WHERE 1=1";
+
+$params = [];
+$types = "";
 
 if ($fromSql !== "") {
-    $where .= " AND gh.fecha_cierre >= '" . $mysqli->real_escape_string($fromSql) . "'";
+    $baseQuery .= " AND pu.fecha_puja >= ?";
+    $params[] = $fromSql;
+    $types .= "s";
 }
 if ($toSql !== "") {
-    $where .= " AND gh.fecha_cierre <= '" . $mysqli->real_escape_string($toSql) . "'";
+    $baseQuery .= " AND pu.fecha_puja <= ?";
+    $params[] = $toSql;
+    $types .= "s";
 }
 if ($categoriaFiltro > 0) {
-    $where .= " AND gh.categoria_id = " . $categoriaFiltro;
+    $baseQuery .= " AND p.categoria_id = ?";
+    $params[] = $categoriaFiltro;
+    $types .= "i";
+}
+if ($productoFiltro !== "") {
+    $baseQuery .= " AND p.nombre LIKE ?";
+    $params[] = "%" . $productoFiltro . "%";
+    $types .= "s";
+}
+if ($participanteFiltro !== "") {
+    $baseQuery .= " AND pu.nombre_usuario LIKE ?";
+    $params[] = "%" . $participanteFiltro . "%";
+    $types .= "s";
 }
 
-// Estadisticas (Top Ganadores)
-$topGanadoresCount = [];
-$topGanadoresTotal = [];
-
-$resStatsCount = $mysqli->query("SELECT nombre_usuario, COUNT(*) as c FROM ganadores_historial gh $where AND nombre_usuario IS NOT NULL AND nombre_usuario <> '' GROUP BY nombre_usuario ORDER BY c DESC LIMIT 5");
-if ($resStatsCount) {
-    while ($row = $resStatsCount->fetch_assoc()) {
-        $topGanadoresCount[$row['nombre_usuario']] = $row['c'];
-    }
-}
-
-$resStatsTotal = $mysqli->query("SELECT nombre_usuario, SUM(monto_puja) as t FROM ganadores_historial gh $where AND nombre_usuario IS NOT NULL AND nombre_usuario <> '' GROUP BY nombre_usuario ORDER BY t DESC LIMIT 5");
-if ($resStatsTotal) {
-    while ($row = $resStatsTotal->fetch_assoc()) {
-        $topGanadoresTotal[$row['nombre_usuario']] = $row['t'];
-    }
-}
-
-// Contar total para paginacion
+// Contar total de registros
 $totalRecords = 0;
-$resCount = $mysqli->query("SELECT COUNT(*) as total FROM ganadores_historial gh $where");
-if ($resCount) {
-    $row = $resCount->fetch_assoc();
-    $totalRecords = (int) ($row["total"] ?? 0);
+$stmtCount = $mysqli->prepare("SELECT COUNT(*) AS total " . $baseQuery);
+if ($stmtCount) {
+    if (!empty($params)) {
+        $stmtCount->bind_param($types, ...$params);
+    }
+    $stmtCount->execute();
+    $resCount = $stmtCount->get_result();
+    if ($resCount) {
+        $row = $resCount->fetch_assoc();
+        $totalRecords = (int) ($row["total"] ?? 0);
+    }
+    $stmtCount->close();
 }
 
 $totalPages = max(1, ceil($totalRecords / $limit));
-if ($page > $totalPages) $page = $totalPages;
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
 $offset = ($page - 1) * $limit;
 
-$query = "SELECT gh.producto_id AS id, gh.producto_nombre AS nombre, gh.fecha_cierre AS fecha_fin,
-    'finalizado' AS estado, gh.nombre_usuario, gh.correo_usuario, gh.telefono_usuario, gh.monto_puja, gh.fecha_puja
-    FROM ganadores_historial gh $where ORDER BY gh.fecha_cierre DESC, gh.id DESC LIMIT $limit OFFSET $offset";
+// Consulta principal con limite
+$query = "SELECT p.nombre AS producto_nombre, c.nombre AS categoria_nombre, pu.nombre_usuario, pu.correo_usuario, pu.telefono_usuario, pu.monto_puja, pu.fecha_puja " . $baseQuery;
+$query .= " ORDER BY p.nombre ASC, pu.fecha_puja DESC LIMIT ? OFFSET ?";
 
-$ganadores = [];
-$result = $mysqli->query($query);
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $ganadores[] = $row;
+$params[] = $limit;
+$params[] = $offset;
+$types .= "ii";
+
+$participantes = [];
+$stmt = $mysqli->prepare($query);
+if ($stmt) {
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
     }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $participantes[] = $row;
+        }
+    }
+    $stmt->close();
 }
 
 $exportParams = [];
-if ($fromRaw !== "") {
-    $exportParams[] = "from=" . urlencode($fromRaw);
-}
-if ($toRaw !== "") {
-    $exportParams[] = "to=" . urlencode($toRaw);
-}
-if ($categoriaFiltro > 0) {
-    $exportParams[] = "categoria=" . $categoriaFiltro;
-}
+if ($fromRaw !== "") $exportParams[] = "from=" . urlencode($fromRaw);
+if ($toRaw !== "") $exportParams[] = "to=" . urlencode($toRaw);
+if ($categoriaFiltro > 0) $exportParams[] = "categoria=" . $categoriaFiltro;
+if ($productoFiltro !== "") $exportParams[] = "producto=" . urlencode($productoFiltro);
+if ($participanteFiltro !== "") $exportParams[] = "participante=" . urlencode($participanteFiltro);
 $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : "";
 ?>
 <!DOCTYPE html>
@@ -115,7 +131,7 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Administracion - Ganadores</title>
+    <title>Administracion - Participantes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -128,14 +144,13 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
             <div class="brand-mark">A</div>
             <div>
                 <div class="brand-name">Administracion</div>
-                <div class="brand-tag">Ganadores de subastas</div>
+                <div class="brand-tag">Lista de Participantes</div>
             </div>
         </div>
         <div class="dash-actions">
-            <a class="btn btn-compact ghost" href="export_ganadores.php?format=excel<?php echo $exportQuery; ?>">Exportar Excel</a>
-            <a class="btn btn-compact ghost" href="export_ganadores.php?format=pdf<?php echo $exportQuery; ?>">Exportar PDF</a>
-            <a class="btn btn-compact ghost" href="dashboard.php">Inicio</a>
-            <a class="btn btn-compact" href="panel.php">Panel</a>
+            <a class="btn btn-compact ghost" href="export_participantes.php?format=excel<?php echo $exportQuery; ?>">Exportar Excel</a>
+            <a class="btn btn-compact ghost" href="export_participantes.php?format=pdf<?php echo $exportQuery; ?>">Exportar PDF</a>
+            <a class="btn btn-compact" href="dashboard.php">Inicio</a>
         </div>
     </header>
 
@@ -144,6 +159,14 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
             <div class="card-title">Filtros</div>
             <form class="filter-form" method="get">
                 <div class="filter-grid">
+                    <label class="field">
+                        <span>Producto</span>
+                        <input type="text" name="producto" value="<?php echo htmlspecialchars($productoFiltro); ?>" placeholder="Nombre del producto" />
+                    </label>
+                    <label class="field">
+                        <span>Participante</span>
+                        <input type="text" name="participante" value="<?php echo htmlspecialchars($participanteFiltro); ?>" placeholder="Nombre del participante" />
+                    </label>
                     <label class="field">
                         <span>Desde</span>
                         <input type="date" name="from" value="<?php echo htmlspecialchars($fromRaw); ?>" />
@@ -166,71 +189,35 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
                 </div>
                 <div class="filter-actions">
                     <button class="btn btn-compact" type="submit">Aplicar filtros</button>
-                    <a class="btn btn-compact ghost" href="ganadores.php">Limpiar</a>
+                    <a class="btn btn-compact ghost" href="participantes.php">Limpiar</a>
                 </div>
             </form>
         </section>
 
         <section class="card">
-            <div class="card-title">Top ganadores</div>
-            <div class="stats-grid">
-                <div>
-                    <div class="stat-title">Por numero de ganadas</div>
-                    <?php if (count($topGanadoresCount) === 0) { ?>
-                        <div class="stat-empty">Sin datos</div>
-                    <?php } else { ?>
-                        <ul class="stat-list">
-                            <?php foreach ($topGanadoresCount as $name => $count) { ?>
-                                <li><?php echo htmlspecialchars($name); ?> <span><?php echo (int) $count; ?></span></li>
-                            <?php } ?>
-                        </ul>
-                    <?php } ?>
-                </div>
-                <div>
-                    <div class="stat-title">Por monto total</div>
-                    <?php if (count($topGanadoresTotal) === 0) { ?>
-                        <div class="stat-empty">Sin datos</div>
-                    <?php } else { ?>
-                        <ul class="stat-list">
-                            <?php foreach ($topGanadoresTotal as $name => $total) { ?>
-                                <li><?php echo htmlspecialchars($name); ?> <span>$<?php echo number_format((float) $total, 2); ?></span></li>
-                            <?php } ?>
-                        </ul>
-                    <?php } ?>
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <div class="card-title">Subastas cerradas</div>
+            <div class="card-title">Lista de Participantes por Producto</div>
             <div class="table-wrap">
                 <table class="admin-table">
                     <thead>
                         <tr>
                             <th>Producto</th>
-                            <?php if ($hasFin) { ?>
-                                <th>Fecha fin</th>
-                            <?php } ?>
-                            <th>Ganador</th>
+                            <th>Participante</th>
                             <th>Correo</th>
                             <th>Telefono</th>
-                            <th>Monto</th>
-                            <th>Fecha puja</th>
+                            <th>Monto de Puja</th>
+                            <th>Fecha de Puja</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (count($ganadores) === 0) { ?>
+                        <?php if (count($participantes) === 0) { ?>
                             <tr>
-                                <td colspan="<?php echo $hasFin ? 7 : 6; ?>">No hay subastas finalizadas.</td>
+                                <td colspan="6">No hay participantes para los filtros seleccionados.</td>
                             </tr>
                         <?php } else { ?>
-                            <?php foreach ($ganadores as $row) { ?>
+                            <?php foreach ($participantes as $row) { ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($row["nombre"] ?? ""); ?></td>
-                                    <?php if ($hasFin) { ?>
-                                        <td><?php echo htmlspecialchars($row["fecha_fin"] ?? "-"); ?></td>
-                                    <?php } ?>
-                                    <td><?php echo htmlspecialchars($row["nombre_usuario"] ?? "Sin pujas"); ?></td>
+                                    <td><?php echo htmlspecialchars($row["producto_nombre"] ?? ""); ?></td>
+                                    <td><?php echo htmlspecialchars($row["nombre_usuario"] ?? ""); ?></td>
                                     <td style="word-break: break-all;"><?php echo htmlspecialchars($row["correo_usuario"] ?? "-"); ?></td>
                                     <td><?php echo htmlspecialchars($row["telefono_usuario"] ?? "-"); ?></td>
                                     <td>$<?php echo number_format((float) ($row["monto_puja"] ?? 0), 2); ?></td>

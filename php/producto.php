@@ -107,6 +107,7 @@ if ($interval) {
     if ($interval->days > 0) $countdown["values"][] = ["value" => $interval->days, "label" => "días"];
     if ($interval->h > 0 || $interval->days > 0) $countdown["values"][] = ["value" => $interval->h, "label" => "hrs"];
     $countdown["values"][] = ["value" => $interval->i, "label" => "min"];
+    $countdown["values"][] = ["value" => $interval->s, "label" => "seg"];
 }
 
 $pujas = [];
@@ -123,9 +124,16 @@ if ($stmtPujas) {
 }
 
 $img = $producto["imagen_url"] ?? "";
-if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
-    $img = "../" . $img;
+$imagenes = json_decode($img, true);
+if (!is_array($imagenes)) {
+    $imagenes = [$img];
 }
+$imagenes = array_filter(array_map(function($path) {
+    $path = trim($path);
+    if ($path === "") return null;
+    return ($path[0] !== "/" && !preg_match("~^https?://~", $path)) ? "../" . $path : $path;
+}, $imagenes));
+$imagenes = array_values($imagenes);
 
 $volver = "subasta.php";
 $volverParams = [];
@@ -148,10 +156,19 @@ if (count($volverParams) > 0) {
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title><?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link href="../css/subasta.css" rel="stylesheet" />
+    <style>
+        .bg-primary { background-color: #FF91AF !important; }
+        .text-primary { color: #FF91AF !important; }
+        .bg-secondary { background-color: #00B4FF !important; }
+        .text-secondary { color: #00B4FF !important; }
+        .btn { background: linear-gradient(135deg, #FF91AF, #FFB3C6) !important; color: white !important; }
+        .btn:hover { background: linear-gradient(135deg, #E87199, #FF9DB8) !important; }
+    </style>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -172,6 +189,64 @@ if (count($volverParams) > 0) {
                 },
             },
         };
+
+        // Cronómetro en tiempo real
+        (function() {
+            <?php
+                $endTime = null;
+                if ($fin !== null) {
+                    $endTime = $fin->getTimestamp() * 1000;
+                } elseif ($inicio !== null && $ahora < $inicio) {
+                    $endTime = $inicio->getTimestamp() * 1000;
+                }
+            ?>
+            
+            const endTime = <?php echo $endTime ? $endTime : 'null'; ?>;
+            if (!endTime) return;
+
+            function updateCountdown() {
+                const now = Date.now();
+                const remaining = endTime - now;
+
+                if (remaining <= 0) {
+                    document.querySelectorAll('[data-countdown]').forEach(el => {
+                        el.innerHTML = '<div class="text-center text-slate-500">La subasta ha finalizado</div>';
+                    });
+                    return;
+                }
+
+                const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+                const countdownItems = [];
+                <?php if ($inicio !== null && $ahora < $inicio) { ?>
+                    if (days > 0) countdownItems.push({ value: days, label: 'días' });
+                    if (hours > 0 || days > 0) countdownItems.push({ value: hours, label: 'hrs' });
+                <?php } else { ?>
+                    if (days > 0) countdownItems.push({ value: days, label: 'días' });
+                    if (hours > 0 || days > 0) countdownItems.push({ value: hours, label: 'hrs' });
+                <?php } ?>
+                countdownItems.push({ value: minutes, label: 'min' });
+                countdownItems.push({ value: seconds, label: 'seg' });
+
+                let html = '<div class="flex justify-center items-baseline gap-4 mt-2">';
+                countdownItems.forEach(item => {
+                    html += `<div><div class="text-4xl font-bold text-primary">${item.value}</div><div class="text-xs text-slate-500">${item.label}</div></div>`;
+                });
+                html += '</div>';
+
+                const countdownEl = document.querySelector('[data-countdown]');
+                if (countdownEl) {
+                    const titleEl = countdownEl.querySelector('h3');
+                    countdownEl.innerHTML = (titleEl ? `<h3 class="text-sm uppercase font-semibold text-slate-400 tracking-wider">${titleEl.textContent}</h3>` : '') + html;
+                }
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        })();
 
         const REFRESH_MS = 12000;
         setInterval(() => {
@@ -199,24 +274,42 @@ if (count($volverParams) > 0) {
 
     <main class="container mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-10">
         <section class="bg-white dark:bg-slate-900 rounded-3xl shadow-md border border-slate-100 dark:border-slate-800 overflow-hidden">
-            <?php if ($img !== "") { ?>
-                <img class="w-full h-96 object-cover" src="<?php echo htmlspecialchars($img); ?>" alt="" />
+            <?php if (count($imagenes) > 1) { ?>
+                <div id="carousel-producto" class="carousel slide carousel-dark h-96" data-bs-ride="carousel">
+                    <div class="carousel-inner h-full">
+                        <?php foreach ($imagenes as $index => $imagen) { ?>
+                            <div class="carousel-item h-full <?php echo $index === 0 ? 'active' : ''; ?>">
+                                <img src="<?php echo htmlspecialchars($imagen); ?>" class="d-block w-100 h-full object-cover" alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>">
+                            </div>
+                        <?php } ?>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-producto" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-producto" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            <?php } elseif (!empty($imagenes[0])) { ?>
+                <img class="w-full h-96 object-cover" src="<?php echo htmlspecialchars($imagenes[0]); ?>" alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>" />
             <?php } ?>
             <div class="p-6 grid gap-4">
                 <p class="text-slate-500 leading-relaxed"><?php echo htmlspecialchars($producto["descripcion"] ?? ""); ?></p>
-                <div class="flex flex-wrap gap-6">
-                    <div>
-                        <div class="text-xs uppercase text-slate-400 font-semibold">Precio inicial</div>
-                        <div class="text-lg font-semibold text-slate-700 dark:text-slate-200">MXN $<?php echo number_format((float)($producto['precio'] ?? 0), 2); ?></div>
+                <div class="flex flex-wrap gap-6 justify-center">
+                    <div class="text-center">
+                        <div class="text-sm uppercase text-slate-400 font-semibold">Precio inicial</div>
+                        <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">MXN $<?php echo number_format((float)($producto['precio'] ?? 0), 2); ?></div>
                     </div>
-                    <div>
-                        <div class="text-xs uppercase text-slate-400 font-semibold">Puja actual</div>
+                    <div class="text-center">
+                        <div class="text-sm uppercase text-slate-400 font-semibold">Puja actual</div>
                         <div class="text-3xl font-bold text-secondary">MXN $<?php echo number_format($precioActual, 2); ?></div>
                     </div>
                     <?php if ($incremento > 0) { ?>
-                        <div>
-                            <div class="text-xs uppercase text-slate-400 font-semibold">Minimo</div>
-                            <div class="text-lg font-semibold text-slate-700 dark:text-slate-200">$<?php echo number_format($minimo, 2); ?></div>
+                        <div class="text-center">
+                            <div class="text-sm uppercase text-slate-400 font-semibold">Minimo</div>
+                            <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">$<?php echo number_format($minimo, 2); ?></div>
                         </div>
                     <?php } ?>
                 </div>
@@ -242,7 +335,7 @@ if (count($volverParams) > 0) {
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Participa</h2>
             </div>
             <?php if ($countdown !== null && !empty($countdown["values"])) { ?>
-                <div class="text-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+                <div class="text-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl" data-countdown>
                     <h3 class="text-sm uppercase font-semibold text-slate-400 tracking-wider"><?php echo htmlspecialchars($countdown['title']); ?></h3>
                     <div class="flex justify-center items-baseline gap-4 mt-2">
                         <?php foreach($countdown['values'] as $item) { ?>
@@ -271,21 +364,21 @@ if (count($volverParams) > 0) {
                     <input type="hidden" name="orden" value="<?php echo htmlspecialchars($ordenFiltro); ?>" />
                     <input type="hidden" name="q" value="<?php echo htmlspecialchars($busqueda); ?>" />
                     <div id="anonimo-field" class="grid gap-2">
-                        <input id="nombre-usuario" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
+                        <input id="nombre-usuario" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-base px-4 py-3 focus:ring-primary" name="nombre_usuario" required placeholder="Nombre" type="text" />
                     </div>
-                    <label class="flex items-center gap-2 text-sm text-slate-500">
-                        <input id="anonimo-toggle" type="checkbox" name="anonimo" value="1" />
+                    <label class="flex items-center gap-3 text-base text-slate-500">
+                        <input id="anonimo-toggle" type="checkbox" name="anonimo" value="1" class="w-5 h-5 cursor-pointer" />
                         Puja anonima
                     </label>
-                    <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
-                    <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />
+                    <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-base px-4 py-3 focus:ring-primary" name="correo_usuario" required placeholder="Correo" type="email" />
+                    <input class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-base px-4 py-3 focus:ring-primary" name="telefono_usuario" required placeholder="Telefono" type="tel" />
                     <div class="flex items-center gap-2">
-                        <input id="monto-puja-input" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-3 py-2 focus:ring-primary w-full" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto (mín. $<?php echo number_format($minimo, 0); ?>)" type="number" />
-                        <button type="button" id="use-min-bid-btn" data-minimo="<?php echo number_format($minimo, 2, '.', ''); ?>" class="flex-shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600">
+                        <input id="monto-puja-input" class="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-base px-4 py-3 focus:ring-primary w-full" name="monto_puja" required min="<?php echo number_format($minimo, 2, '.', ''); ?>" step="0.01" placeholder="Monto (mín. $<?php echo number_format($minimo, 0); ?>)" type="number" />
+                        <button type="button" id="use-min-bid-btn" data-minimo="<?php echo number_format($minimo, 2, '.', ''); ?>" class="flex-shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold px-4 py-3 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600">
                             Mínimo
                         </button>
                     </div>
-                    <button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-primary/30 transition-all" type="submit">
+                    <button class="bg-primary text-white px-5 py-3 rounded-xl font-bold text-base hover:shadow-lg hover:shadow-primary/30 transition-all" type="submit">
                         Pujar
                     </button>
                 </form>
@@ -305,7 +398,7 @@ if (count($volverParams) > 0) {
                                     $nombreMostrado = $esAnonimo ? "Anonimo" : htmlspecialchars($puja["nombre_usuario"] ?? "");
                                 ?>
                                 <span class="truncate max-w-[60%]"><?php echo $nombreMostrado; ?></span>
-                                <span class="font-semibold">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></span>
+                                <span class="font-bold text-lg">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></span>
                             </div>
                             <?php if ($hasOrigen && !empty($puja["origen"]) && !$esAnonimo) { ?>
                                 <div class="text-[10px] uppercase tracking-widest text-slate-400">
@@ -347,7 +440,18 @@ if (count($volverParams) > 0) {
                     }
                 });
             }
+
+            // Autoplay de carruseles
+            var carousels = document.querySelectorAll('.carousel');
+            carousels.forEach(function(carousel) {
+                new bootstrap.Carousel(carousel, {
+                    interval: 5000,
+                    wrap: true,
+                    keyboard: true
+                });
+            });
         })();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

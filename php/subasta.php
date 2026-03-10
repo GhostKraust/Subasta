@@ -259,9 +259,17 @@ if ($resultProductos) {
     <?php foreach ($productos as $producto) { ?>
         <?php
             $img = $producto["imagen_url"] ?? "";
-            if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
-                $img = "../" . $img;
+            $imagenes = json_decode($img, true);
+            if (!is_array($imagenes)) {
+                $imagenes = [$img];
             }
+            $imagenes = array_filter(array_map(function($path) {
+                $path = trim($path);
+                if ($path === "") return null;
+                return ($path[0] !== "/" && !preg_match("~^https?://~", $path)) ? "../" . $path : $path;
+            }, $imagenes));
+            $imagenes = array_values($imagenes);
+            
             $precioActual = (float) ($producto["precio"] ?? 0);
             $maxPuja = (float) ($producto["max_puja"] ?? 0);
             if ($maxPuja > $precioActual) {
@@ -302,8 +310,26 @@ if ($resultProductos) {
         ?>
         <div class="auction-card bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-md border border-slate-100 dark:border-slate-800 flex flex-col">
             <div class="relative h-60 overflow-hidden">
-                <?php if ($img !== "") { ?>
-                    <img alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>" class="w-full h-full object-cover" src="<?php echo htmlspecialchars($img); ?>"/>
+                <?php if (count($imagenes) > 1) { ?>
+                    <div id="carousel-<?php echo $producto['id']; ?>" class="carousel slide carousel-dark h-full" data-bs-ride="carousel">
+                        <div class="carousel-inner h-full">
+                            <?php foreach ($imagenes as $index => $imagen) { ?>
+                                <div class="carousel-item h-full <?php echo $index === 0 ? 'active' : ''; ?>">
+                                    <img src="<?php echo htmlspecialchars($imagen); ?>" class="d-block w-100 h-full object-cover" alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>">
+                                </div>
+                            <?php } ?>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<?php echo $producto['id']; ?>" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-<?php echo $producto['id']; ?>" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                <?php } elseif (!empty($imagenes[0])) { ?>
+                    <img alt="<?php echo htmlspecialchars($producto["nombre"] ?? "Producto"); ?>" class="w-full h-full object-cover" src="<?php echo htmlspecialchars($imagenes[0]); ?>"/>
                 <?php } ?>
                 <div class="absolute top-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
                     <div><?php echo htmlspecialchars($producto["categoria"] ?? ""); ?></div>
@@ -353,72 +379,106 @@ if ($resultProductos) {
 </div>
     </main>
     <footer>
-        <div class="footer-pink py-5">
-            <div class="container text-center">
-                <div class="row justify-content-center">
-                    <div class="col-lg-6 mb-4">
-                        <div class="mb-4">
-                            <img src="../Imagenes/logos_blancos.png" alt="Logos" height="80">
-                        </div>
-                        <p class="px-lg-5 mb-4" style="font-size: 0.95rem; line-height: 1.6;">
-                            Pasitos de Luz es una asociación civil en Bahía de Banderas. Es una organización registrada sin fines de lucro fundada por madres de niños discapacitados para satisfacer sus necesidades terapéuticas, psicológicas, nutricionales, educativas y básicas.
-                        </p>
-                        <p class="small mb-1">Boulevard Federación | Nayarit, México | C.P. 63737</p>
-                        <p class="small">Tel: (+52) 322 135 6302 | info@pasitosdeluz.org</p>
-                    </div>
-
-                    <div class="col-lg-4 d-flex flex-column align-items-center justify-content-center border-start border-light border-opacity-25">
-                        <h4 class="mb-3 fw-light italic"><i class="bi bi-book me-2"></i> Boletín Informativo</h4>
-                        <button class="btn btn-subscribe shadow-sm mb-3">SUBSCRIBETE</button>
-                        <a href="#" class="text-white text-decoration-none small opacity-75">AVISO DE PRIVACIDAD</a>
-                    </div>
-                </div>
-
-                <div class="mt-4 fs-4">
-                    <i class="bi bi-telephone mx-2"></i>
-                    <i class="bi bi-whatsapp mx-2"></i>
-                    <i class="bi bi-geo-alt mx-2"></i>
-                    <i class="bi bi-facebook mx-2"></i>
-                    <i class="bi bi-instagram mx-2"></i>
-                    <i class="bi bi-youtube mx-2"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white py-5 border-top">
+        <div class="py-5" style="background: #f78da7;">
             <div class="container">
+                <!-- Header con logos y tagline -->
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-4 text-md-start text-center mb-3 mb-md-0">
+                        <img src="../Imagenes/footer1.png" alt="Logos" height="80">
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h2 class="fw-bold italic" style="font-size: 1.8rem; font-style: italic; color: #ffffff;">
+                            "Working with love"
+                        </h2>
+                    </div>
+                    <div class="col-md-4 text-md-end text-center mb-3 mb-md-0">
+                        <button class="btn" style="border: 2px solid #ffffff; color: #ffffff; background: transparent; padding: 10px 20px; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#666666'; this.style.color='#00B4FF'; this.style.borderColor='#666666';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ffffff'; this.style.borderColor='#ffffff';">
+                            Join Our Newsletter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="row justify-content-center mb-4">
+                    <div class="col-lg-10 text-center">
+                        <p class="mb-4" style="font-size: 1rem; line-height: 1.7; font-weight: 500; color: #ffffff;">
+                            Pasitos de Luz is a civil association in Banderas Bay. It is a registered non- profit organization founded by mothers of disabled children to meet their therapeutic, psychological, nutritional, educational and basic needs.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Contacto -->
+                <div class="row justify-content-center text-center mb-4">
+                    <div class="col-lg-8">
+                        <p class="small mb-1" style="color: #ffffff;">Boulevard Federación | Nayarit, México | C.P. 63737</p>
+                        <p class="small" style="color: #ffffff;">Tel: (+52) 322 135 6302 / info@pasitosdeluz.org</p>
+                    </div>
+                </div>
+
+                <!-- Redes Sociales -->
+                <div class="row justify-content-center mb-4">
+                    <div class="col-auto">
+                        <div class="d-flex gap-3 justify-content-center" style="font-size: 1.8rem;">
+                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-telephone"></i></a>
+                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-whatsapp"></i></a>
+                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-geo-alt"></i></a>
+                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-facebook"></i></a>
+                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-instagram"></i></a>
+                            <a href="https://www.youtube.com/@PasitosdeLuz" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Link -->
+                <div class="row justify-content-center mb-5">
+                    <div class="col-auto text-center">
+                        <a href="https://pasitosdeluz.org/privacy/" class="text-decoration-none" style="font-weight: 700; letter-spacing: 0.1em; font-size: 1.0rem; color: #ffffff;">PRIVACY POLICY</a>
+                    </div>
+                </div>
+
+                <!-- Links Section -->
                 <div class="row text-center footer-links g-4">
                     <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3">Sobre Nosotros</h6>
+                        <h6 class="fw-bold mb-3" style="color: #ffffff;">About Us</h6>
                         <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="#">Historia Pasitos de Luz</a></li>
-                            <li><a href="#">Casa Connor</a></li>
+                            <li class="mb-2"><a href="https://pasitosdeluz.org/about-us/pasitos-de-luz-history/" style="color: #ffffff;">Pasitos de Luz History</a></li>
+                            <li><a href="https://pasitosdeluz.org/about-us/casa-connor/" style="color: #ffffff;">Casa Connor</a></li>
                         </ul>
                     </div>
                     <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3">Dirección y Junta Administrativa</h6>
+                        <h6 class="fw-bold mb-3" style="color: #ffffff;">Board of Directors</h6>
                         <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="#">Dona por Amor</a></li>
-                            <li><a href="#">Se Voluntario</a></li>
+                            <li class="mb-2"><a href="https://pasitosdeluz.org/donate-1/donate1-2/" style="color: #ffffff;">Love Pasitos Monthly</a></li>
+                            <li><a href="https://pasitosdeluz.org/donate-1/volunteer/" style="color: #ffffff;">Volunteer</a></li>
                         </ul>
                     </div>
                     <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3">Dona de Nuestra Lista de Necesidades</h6>
+                        <h6 class="fw-bold mb-3" style="color: #ffffff;">List of Necessities</h6>
                         <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="#">Finanzas</a></li>
-                            <li><a href="#">Campañas</a></li>
+                            <li class="mb-2"><a href="#" style="color: #ffffff;">Financials</a></li>
+                            <li><a href="#" style="color: #ffffff;">Campaigns</a></li>
                         </ul>
                     </div>
                     <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3">Eventos</h6>
+                        <h6 class="fw-bold mb-3" style="color: #ffffff;">Events</h6>
                         <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="#">Noticias</a></li>
-                            <li><a href="#">Preguntas Frecuentes</a></li>
+                            <li class="mb-2"><a href="#" style="color: #ffffff;">News</a></li>
+                            <li><a href="#" style="color: #ffffff;">Frequently Asked Questions</a></li>
                         </ul>
                     </div>
                 </div>
                 <div class="text-center small mt-4">
-                    <a href="../php/login.php" class="text-decoration-none">Administracion: agregar productos</a>
+                    <a href="../php/login.php" class="text-decoration-none" style="color: #ffffff;">Administracion: agregar productos</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+                            <li><a href="#" style="color: #ffffff  ;">Frequently Asked Questions</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="text-center small mt-4">
+                    <a href="../php/login.php" class="text-decoration-none" style="color: #ffffff;">Administracion: agregar productos</a>
                 </div>
             </div>
         </div>
@@ -436,6 +496,16 @@ if ($resultProductos) {
             event.preventDefault();
             collapse.classList.toggle("show");
             toggler.setAttribute("aria-expanded", collapse.classList.contains("show") ? "true" : "false");
+        });
+
+        // Autoplay de carruseles
+        var carousels = document.querySelectorAll('.carousel');
+        carousels.forEach(function(carousel) {
+            var bootstrapCarousel = new bootstrap.Carousel(carousel, {
+                interval: 5000,
+                wrap: true,
+                keyboard: true
+            });
         });
     });
 </script>

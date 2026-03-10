@@ -44,6 +44,8 @@ if (!in_array($moneda, $monedas, true)) {
 }
 
 $mostrarFinalizados = !empty($_GET["finalizados"]);
+$limit = 4;
+$page = max(1, (int) ($_GET["page"] ?? 1));
 
 $rates = ["MXN" => 1.0, "USD" => 1.0, "CAD" => 1.0];
 $ratesResult = $mysqli->query("SELECT moneda, tasa FROM exchange_rates");
@@ -85,12 +87,25 @@ $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
-$queryProductos = "SELECT p.id, p.nombre, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria$selectIncremento$selectInicio$selectFin " .
-    "FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id";
+
+$whereClause = "";
 if (!$mostrarFinalizados) {
-    $queryProductos .= " WHERE p.estado <> 'finalizado'";
+    $whereClause = " WHERE p.estado <> 'finalizado'";
 }
-$queryProductos .= " ORDER BY p.id DESC";
+
+$totalRecords = 0;
+$resCount = $mysqli->query("SELECT COUNT(*) as total FROM productos p " . $whereClause);
+if ($resCount) {
+    $row = $resCount->fetch_assoc();
+    $totalRecords = (int) ($row["total"] ?? 0);
+}
+
+$totalPages = max(1, ceil($totalRecords / $limit));
+if ($page > $totalPages) $page = $totalPages;
+$offset = ($page - 1) * $limit;
+
+$queryProductos = "SELECT p.id, p.nombre, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria$selectIncremento$selectInicio$selectFin " .
+    "FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id" . $whereClause . " ORDER BY p.id DESC LIMIT $limit OFFSET $offset";
 $resultProductos = $mysqli->query($queryProductos);
 if ($resultProductos) {
     while ($row = $resultProductos->fetch_assoc()) {
@@ -117,6 +132,15 @@ if (count($productos) > 0) {
         }
     }
 }
+
+$pageParams = [];
+if ($moneda !== "MXN") {
+    $pageParams[] = "moneda=" . urlencode($moneda);
+}
+if ($mostrarFinalizados) {
+    $pageParams[] = "finalizados=1";
+}
+$pageQuery = count($pageParams) > 0 ? "&" . implode("&", $pageParams) : "";
 
 $estadoStatus = trim($_GET["estado"] ?? "");
 $isAdmin = is_admin();
@@ -194,6 +218,8 @@ if (!empty($_GET["ok"])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="../css/style.css" rel="stylesheet" />
 </head>
 <body class="auth-page products-page">
@@ -217,7 +243,7 @@ if (!empty($_GET["ok"])) {
             <?php if ($isAdmin) { ?>
                 <a class="btn btn-compact ghost" href="historial_productos.php">Historial</a>
                 <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
-                <a class="btn btn-compact" href="dashboard.php">Ir al dashboard</a>
+                <a class="btn btn-compact" href="dashboard.php">Inicio</a>
             <?php } ?>
         </div>
         <form class="currency-bar" method="get">
@@ -234,39 +260,6 @@ if (!empty($_GET["ok"])) {
                 Mostrar finalizados
             </label>
         </form>
-
-        <div class="modal fade" id="reactivarModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Reactivar subasta</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Quieres reactivar la subasta de <strong id="reactivarNombre"></strong> para una nueva subasta?</p>
-                        <div class="auth-form mt-3">
-                            <label class="field">
-                                <span>Fecha y hora de inicio</span>
-                                <input id="reactivarInicio" name="fecha_inicio" type="datetime-local" required form="reactivarForm" />
-                            </label>
-                            <label class="field">
-                                <span>Fecha y hora de fin</span>
-                                <input id="reactivarFin" name="fecha_fin" type="datetime-local" required form="reactivarForm" />
-                                <small class="field-hint">La fecha fin debe ser posterior al inicio.</small>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form id="reactivarForm" action="cambiar_estado_producto.php" method="post">
-                            <input type="hidden" name="id" id="reactivarId" value="" />
-                            <input type="hidden" name="estado" value="activo" />
-                            <button type="submit" class="btn">Reactivar</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <section class="auth-card admin-new">
             <div class="auth-brand">
@@ -289,7 +282,7 @@ if (!empty($_GET["ok"])) {
                 </label>
                 <label class="field">
                     <span>Imagen del producto</span>
-                    <input name="imagen" type="file" accept="image/*" required />
+                    <input name="imagen[]" type="file" accept="image/*" multiple required />
                     <small class="field-hint">Se subira al servidor y se guardara en la base de datos.</small>
                 </label>
                 <label class="field">
@@ -327,11 +320,36 @@ if (!empty($_GET["ok"])) {
                     </select>
                 </label>
                 <button class="btn" type="submit">Guardar producto</button>
+                <button type="button" class="btn btn-preview-mobile" data-bs-toggle="modal" data-bs-target="#previewModal">Ver Vista Previa</button>
             </form>
             <div class="switch">
                 <a class="link" href="panel.php">Volver al panel</a>
             </div>
         </section>
+        <aside class="product-preview-wrapper">
+            <h3 class="preview-title">Vista previa</h3>
+            <div class="preview-card">
+                <div class="preview-image-box">
+                    <img id="preview-image-desktop" src="" alt="Vista previa" style="display: none;" />
+                    <div id="preview-placeholder-desktop" style="width:100%; height:100%; display:grid; place-items:center; color:#94a3b8; font-weight:600;">Sin imagen</div>
+                    <div id="preview-category-desktop" class="preview-category-tag">Categoria</div>
+                </div>
+                <div class="preview-info">
+                    <h2 id="preview-name-desktop" class="preview-product-title">Nombre del Producto</h2>
+                    <p id="preview-description-desktop" class="preview-product-desc">Aquí va la descripción del producto que estás agregando.</p>
+                    <div class="preview-prices">
+                        <div class="preview-price-block">
+                            <span class="preview-price-label">Precio inicial</span>
+                            <span id="preview-price-desktop" class="preview-price-value">MXN $0.00</span>
+                        </div>
+                        <div class="preview-price-block">
+                            <span class="preview-price-label">Puja actual</span>
+                            <span id="preview-price-current-desktop" class="preview-price-value highlight">MXN $0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
         <section class="auth-card admin-products">
             <div class="section-header">
@@ -366,14 +384,22 @@ if (!empty($_GET["ok"])) {
                             <?php foreach ($productos as $producto) { ?>
                                 <?php
                                     $img = $producto["imagen_url"] ?? "";
-                                    if ($img !== "" && $img[0] !== "/" && !preg_match("~^https?://~", $img)) {
-                                        $img = "../" . $img;
+                                    $imagenes = json_decode($img, true);
+                                    if (!is_array($imagenes)) {
+                                        $imagenes = [$img];
                                     }
+                                    $imagenes = array_filter(array_map(function($path) {
+                                        $path = trim($path);
+                                        if ($path === "") return null;
+                                        return ($path[0] !== "/" && !preg_match("~^https?://~", $path)) ? "../" . $path : $path;
+                                    }, $imagenes));
+                                    $imagenes = array_values($imagenes);
+                                    $firstImage = $imagenes[0] ?? "";
                                 ?>
                                 <tr>
                                     <td>
-                                        <?php if ($img !== "") { ?>
-                                            <img class="thumb" src="<?php echo htmlspecialchars($img); ?>" alt="" />
+                                        <?php if ($firstImage !== "") { ?>
+                                            <img class="thumb" src="<?php echo htmlspecialchars($firstImage); ?>" alt="" />
                                         <?php } ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($producto["nombre"] ?? ""); ?></td>
@@ -459,9 +485,102 @@ if (!empty($_GET["ok"])) {
                     </tbody>
                 </table>
             </div>
+            <?php if ($totalPages > 1) { ?>
+                <div class="pagination">
+                    <a class="btn btn-compact <?php echo $page <= 1 ? 'disabled' : ''; ?>" href="<?php echo $page <= 1 ? '#' : '?page=' . ($page - 1) . $pageQuery; ?>">Anterior</a>
+                    <span class="page-info">Pagina <?php echo $page; ?> de <?php echo $totalPages; ?></span>
+                    <a class="btn btn-compact <?php echo $page >= $totalPages ? 'disabled' : ''; ?>" href="<?php echo $page >= $totalPages ? '#' : '?page=' . ($page + 1) . $pageQuery; ?>">Siguiente</a>
+                </div>
+            <?php } ?>
         </section>
     </main>
+    <div class="modal fade" id="reactivarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reactivar subasta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Quieres reactivar la subasta de <strong id="reactivarNombre"></strong> para una nueva subasta?</p>
+                    <div class="auth-form mt-3">
+                        <label class="field">
+                            <span>Fecha y hora de inicio</span>
+                            <input id="reactivarInicio" name="fecha_inicio" type="datetime-local" required form="reactivarForm" />
+                        </label>
+                        <label class="field">
+                            <span>Fecha y hora de fin</span>
+                            <input id="reactivarFin" name="fecha_fin" type="datetime-local" required form="reactivarForm" />
+                            <small class="field-hint">La fecha fin debe ser posterior al inicio.</small>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="reactivarForm" action="cambiar_estado_producto.php" method="post">
+                        <input type="hidden" name="id" id="reactivarId" value="" />
+                        <input type="hidden" name="estado" value="activo" />
+                        <button type="submit" class="btn">Reactivar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div class="modal fade" id="cropperModal" tabindex="-1" aria-labelledby="cropperModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cropperModalLabel">Ajustar Imagen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="cropper-modal-img-container">
+                        <img id="cropperImage" src="" alt="Imagen para recortar">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn" id="cropButton">Recortar y Usar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal fade modal-preview" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="preview-card">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 1rem; right: 1rem; z-index: 10;"></button>
+                    <div class="preview-image-box">
+                        <img id="preview-image-mobile" src="" alt="Vista previa" style="display: none;" />
+                        <div id="preview-placeholder-mobile" style="width:100%; height:100%; display:grid; place-items:center; color:#94a3b8; font-weight:600;">Sin imagen</div>
+                        <div id="preview-category-mobile" class="preview-category-tag">Categoria</div>
+                    </div>
+                    <div class="preview-info">
+                        <h2 id="preview-name-mobile" class="preview-product-title">Nombre del Producto</h2>
+                        <p id="preview-description-mobile" class="preview-product-desc">Aquí va la descripción del producto que estás agregando.</p>
+                        <div class="preview-prices">
+                            <div class="preview-price-block">
+                                <span class="preview-price-label">Precio inicial</span>
+                                <span id="preview-price-mobile" class="preview-price-value">MXN $0.00</span>
+                            </div>
+                            <div class="preview-price-block">
+                                <span class="preview-price-label">Puja actual</span>
+                                <span id="preview-price-current-mobile" class="preview-price-value highlight">MXN $0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         const toastEl = document.getElementById("statusToast");
         if (toastEl) {
@@ -480,84 +599,236 @@ if (!empty($_GET["ok"])) {
             var nameLabel = document.getElementById("reactivarNombre");
             var inicioInput = document.getElementById("reactivarInicio");
             var finInput = document.getElementById("reactivarFin");
-            var form = document.getElementById("reactivarForm");
 
-            function pad(value) {
-                return String(value).padStart(2, "0");
-            }
+            const fpConfig = {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                altInput: true,
+                altFormat: "j F, Y h:i K",
+                locale: "es",
+                minDate: "today",
+            };
 
-            function nowLocalValue() {
-                var now = new Date();
-                return (
-                    now.getFullYear() +
-                    "-" +
-                    pad(now.getMonth() + 1) +
-                    "-" +
-                    pad(now.getDate()) +
-                    "T" +
-                    pad(now.getHours()) +
-                    ":" +
-                    pad(now.getMinutes())
-                );
-            }
+            const fpInicio = inicioInput ? flatpickr(inicioInput, {
+                ...fpConfig,
+                onChange: function(selectedDates, dateStr) {
+                    if (fpFin) fpFin.set('minDate', dateStr);
+                },
+            }) : null;
 
-            function syncMinDates() {
-                if (!inicioInput || !finInput) {
-                    return;
-                }
-                var minNow = nowLocalValue();
-                if (!inicioInput.value || inicioInput.value < minNow) {
-                    inicioInput.min = minNow;
-                }
-                if (inicioInput.value) {
-                    finInput.min = inicioInput.value;
-                } else {
-                    finInput.min = minNow;
-                }
-            }
+            const fpFin = finInput ? flatpickr(finInput, fpConfig) : null;
 
             document.querySelectorAll("button[data-reactivar='1']").forEach(function (btn) {
                 btn.addEventListener("click", function () {
                     var id = btn.getAttribute("data-id") || "";
                     var name = btn.getAttribute("data-name") || "";
-                    if (idInput) {
-                        idInput.value = id;
-                    }
-                    if (nameLabel) {
-                        nameLabel.textContent = name;
-                    }
-                    if (inicioInput && finInput) {
-                        var minNow = nowLocalValue();
-                        inicioInput.value = "";
-                        finInput.value = "";
-                        inicioInput.min = minNow;
-                        finInput.min = minNow;
-                    }
+                    if (idInput) idInput.value = id;
+                    if (nameLabel) nameLabel.textContent = name;
+                    if (fpInicio) fpInicio.clear();
+                    if (fpFin) fpFin.clear();
                     modal.show();
                 });
             });
-
-            if (inicioInput && finInput) {
-                inicioInput.addEventListener("change", syncMinDates);
-            }
-
-            if (form) {
-                form.addEventListener("submit", function (event) {
-                    if (!inicioInput || !finInput) {
-                        return;
-                    }
-                    var inicio = inicioInput.value;
-                    var fin = finInput.value;
-                    var minNow = nowLocalValue();
-                    if (!inicio || !fin || inicio < minNow || fin <= inicio) {
-                        event.preventDefault();
-                        finInput.setCustomValidity("La fecha fin debe ser posterior al inicio y no en el pasado.");
-                        finInput.reportValidity();
-                        finInput.setCustomValidity("");
-                    }
-                });
-            }
         })();
+    </script>
+    <script>
+    (function() {
+        // Form inputs
+        const form = document.querySelector('form[action="guardar_producto.php"]');
+        if (!form) return;
+
+        const nombreInput = form.querySelector('input[name="nombre"]');
+        const descripcionInput = form.querySelector('input[name="descripcion"]');
+        const imagenInput = form.querySelector('input[name="imagen[]"]');
+        const precioInput = form.querySelector('input[name="precio_inicial"]');
+        const categoriaSelect = form.querySelector('select[name="categoria_id"]');
+
+        // Desktop Preview elements
+        const previewImageDesktop = document.getElementById('preview-image-desktop');
+        const previewCategoryDesktop = document.getElementById('preview-category-desktop');
+        const previewNameDesktop = document.getElementById('preview-name-desktop');
+        const previewDescriptionDesktop = document.getElementById('preview-description-desktop');
+        const previewPriceDesktop = document.getElementById('preview-price-desktop');
+        const previewPriceCurrentDesktop = document.getElementById('preview-price-current-desktop');
+        const previewPlaceholderDesktop = document.getElementById('preview-placeholder-desktop');
+
+        // Mobile Preview elements
+        const previewImageMobile = document.getElementById('preview-image-mobile');
+        const previewCategoryMobile = document.getElementById('preview-category-mobile');
+        const previewNameMobile = document.getElementById('preview-name-mobile');
+        const previewDescriptionMobile = document.getElementById('preview-description-mobile');
+        const previewPriceMobile = document.getElementById('preview-price-mobile');
+        const previewPriceCurrentMobile = document.getElementById('preview-price-current-mobile');
+        const previewPlaceholderMobile = document.getElementById('preview-placeholder-mobile');
+
+        function updatePreview() {
+            const name = nombreInput.value || 'Nombre del Producto';
+            const desc = descripcionInput.value || 'Aquí va la descripción del producto que estás agregando.';
+            const priceValue = parseFloat(precioInput.value) || 0;
+            const formattedPrice = `MXN $${priceValue.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            const selectedCategory = categoriaSelect.options[categoriaSelect.selectedIndex];
+            const category = (selectedCategory && selectedCategory.value !== "") ? selectedCategory.text : 'Categoría';
+
+            // Update Desktop
+            previewNameDesktop.textContent = name;
+            previewDescriptionDesktop.textContent = desc;
+            previewPriceDesktop.textContent = formattedPrice;
+            previewPriceCurrentDesktop.textContent = formattedPrice;
+            const catDesktop = document.getElementById('preview-category-desktop');
+            if (catDesktop) catDesktop.textContent = category;
+
+            // Update Mobile
+            previewNameMobile.textContent = name;
+            previewDescriptionMobile.textContent = desc;
+            previewPriceMobile.textContent = formattedPrice;
+            previewPriceCurrentMobile.textContent = formattedPrice;
+            const catMobile = document.getElementById('preview-category-mobile');
+            if (catMobile) catMobile.textContent = category;
+        }
+
+        [nombreInput, descripcionInput, precioInput].forEach(el => el.addEventListener('input', updatePreview));
+        categoriaSelect.addEventListener('change', updatePreview);
+
+        // --- Cropper Logic ---
+        const cropperModalEl = document.getElementById('cropperModal');
+        const cropperModal = new bootstrap.Modal(cropperModalEl);
+        const cropperImage = document.getElementById('cropperImage');
+        const cropButton = document.getElementById('cropButton');
+        const cropperModalLabel = document.getElementById('cropperModalLabel');
+        let cropper;
+
+        let filesToCrop = [];
+        let croppedBlobs = [];
+        let currentCropIndex = 0;
+
+        function loadCropperForCurrentFile() {
+            const file = filesToCrop[currentCropIndex];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                if (cropper) {
+                    cropper.replace(event.target.result);
+                } else {
+                    cropperImage.src = event.target.result;
+                }
+                if (cropperModalLabel) {
+                    cropperModalLabel.textContent = `Ajustar Imagen (${currentCropIndex + 1} de ${filesToCrop.length})`;
+                }
+                if (currentCropIndex === 0) {
+                    cropperModal.show();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function finalizeCropping() {
+            cropperModal.hide();
+            const dataTransfer = new DataTransfer();
+            croppedBlobs.forEach((blob, index) => {
+                const file = new File([blob], `cropped_image_${index}.jpg`, { type: 'image/jpeg' });
+                dataTransfer.items.add(file);
+            });
+            imagenInput.files = dataTransfer.files;
+            updatePreviewWithCroppedImages();
+        }
+
+        function updatePreviewWithCroppedImages() {
+            const buildCarousel = (targetId, categoryId) => {
+                let innerHTML = `<div id="${targetId}" class="carousel slide carousel-dark h-100" data-bs-ride="carousel"><div class="carousel-inner h-100">`;
+                croppedBlobs.forEach((blob, index) => {
+                    const url = URL.createObjectURL(blob);
+                    innerHTML += `<div class="carousel-item h-100 ${index === 0 ? 'active' : ''}"><img src="${url}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Vista previa ${index + 1}"></div>`;
+                });
+                innerHTML += `</div><button class="carousel-control-prev" type="button" data-bs-target="#${targetId}" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span></button><button class="carousel-control-next" type="button" data-bs-target="#${targetId}" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span></button><div id="${categoryId}" class="preview-category-tag">Categoria</div></div>`;
+                return innerHTML;
+            };
+            const imageBoxDesktop = document.querySelector('.product-preview-wrapper .preview-image-box');
+            const imageBoxMobile = document.querySelector('#previewModal .preview-image-box');
+            if (croppedBlobs.length > 1) {
+                imageBoxDesktop.innerHTML = buildCarousel('carousel-preview-desktop', 'preview-category-desktop');
+                imageBoxMobile.innerHTML = buildCarousel('carousel-preview-mobile', 'preview-category-mobile');
+            } else if (croppedBlobs.length === 1) {
+                const url = URL.createObjectURL(croppedBlobs[0]);
+                imageBoxDesktop.innerHTML = `<img id="preview-image-desktop" src="${url}" alt="Vista previa" style="display: block;" /><div id="preview-placeholder-desktop" style="display:none;">Sin imagen</div><div id="preview-category-desktop" class="preview-category-tag">Categoria</div>`;
+                imageBoxMobile.innerHTML = `<img id="preview-image-mobile" src="${url}" alt="Vista previa" style="display: block;" /><div id="preview-placeholder-mobile" style="display:none;">Sin imagen</div><div id="preview-category-mobile" class="preview-category-tag">Categoria</div>`;
+            }
+            updatePreview();
+        }
+
+        imagenInput.addEventListener('change', function(e) {
+            filesToCrop = Array.from(e.target.files);
+            if (filesToCrop.length > 0) {
+                currentCropIndex = 0;
+                croppedBlobs = [];
+                loadCropperForCurrentFile();
+            }
+        });
+
+        cropperModalEl.addEventListener('shown.bs.modal', function() {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: 4 / 3,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.9,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        });
+
+        cropperModalEl.addEventListener('hidden.bs.modal', function() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        });
+
+        cropButton.addEventListener('click', function() {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({ width: 800, height: 600, imageSmoothingQuality: 'high' });
+            canvas.toBlob(function(blob) {
+                croppedBlobs.push(blob);
+                currentCropIndex++;
+                if (currentCropIndex < filesToCrop.length) {
+                    loadCropperForCurrentFile();
+                } else {
+                    finalizeCropping();
+                }
+            }, 'image/jpeg', 0.9);
+        });
+
+        updatePreview();
+    })();
+
+    (function() {
+        const fpConfig = {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            altInput: true,
+            altFormat: "j F, Y h:i K",
+            locale: "es",
+            minuteIncrement: 1,
+            minDate: "today",
+        };
+
+        const newInicio = document.querySelector('form[action="guardar_producto.php"] input[name="fecha_inicio"]');
+        const newFin = document.querySelector('form[action="guardar_producto.php"] input[name="fecha_fin"]');
+
+        if (newInicio) {
+            const fpInicio = flatpickr(newInicio, {
+                ...fpConfig,
+                onChange: function(selectedDates, dateStr) {
+                    if (fpFin) fpFin.set('minDate', dateStr);
+                }
+            });
+            const fpFin = newFin ? flatpickr(newFin, fpConfig) : null;
+        }
+    })();
     </script>
 </body>
 </html>

@@ -180,6 +180,34 @@ $generatedAt = date("Y-m-d H:i");
             color: #555;
             font-size: 0.9rem;
         }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn-back {
+            display: none;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            align-items: center;
+            gap: 6px;
+        }
+        @media print {
+            .btn-back {
+                display: none !important;
+            }
+        }
+        @media screen {
+            .btn-back {
+                display: inline-flex !important;
+            }
+        }
         @page {
             size: landscape;
             margin: 12mm;
@@ -207,8 +235,13 @@ $generatedAt = date("Y-m-d H:i");
 </head>
 <body>
     <header>
-        <h1>Productos</h1>
-        <div class="meta">Generado: <?php echo htmlspecialchars($generatedAt); ?></div>
+        <div>
+            <h1>Productos</h1>
+        </div>
+        <div class="header-actions">
+            <a href="productos.php" class="btn-back">← Volver</a>
+            <div class="meta">Generado: <?php echo htmlspecialchars($generatedAt); ?></div>
+        </div>
     </header>
     <?php if (!$isExcel) { ?>
         <script>

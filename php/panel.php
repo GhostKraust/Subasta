@@ -251,7 +251,7 @@ if ($resultPujas) {
             <?php if ($isAdmin) { ?>
                 <a class="btn btn-compact ghost" href="productos.php">Productos</a>
                 <a class="btn btn-compact ghost" href="graficos.php">Graficas</a>
-                <a class="btn btn-compact" href="dashboard.php">Ir al dashboard</a>
+                <a class="btn btn-compact" href="dashboard.php">Inicio</a>
             <?php } ?>
         </div>
         <form class="currency-bar" method="get">
