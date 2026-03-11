@@ -221,6 +221,25 @@ if (!empty($_GET["ok"])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="../css/style.css" rel="stylesheet" />
+    <style>
+        /* Contenedor para limitar el scroll sticky de la vista previa */
+        .product-creation-group {
+            display: grid;
+            grid-column: 1 / -1; /* Hacer que el grupo ocupe todo el ancho */
+            grid-template-columns: 1fr 340px; /* Espacio para formulario y preview reducido */
+            gap: 32px;
+            align-items: start;
+            margin-bottom: 40px; /* Separacion con la tabla de abajo */
+        }
+        .product-preview-wrapper {
+            position: sticky;
+            top: 24px; /* Margen superior al bajar */
+        }
+        @media (max-width: 1100px) {
+            .product-creation-group { display: block; }
+            .product-preview-wrapper { display: none; } /* En movil se usa el boton de modal */
+        }
+    </style>
 </head>
 <body class="auth-page products-page">
     <?php if ($toast) { ?>
@@ -261,6 +280,7 @@ if (!empty($_GET["ok"])) {
             </label>
         </form>
 
+        <div class="product-creation-group">
         <section class="auth-card admin-new">
             <div class="auth-brand">
                 <div class="brand-mark">A</div>
@@ -350,6 +370,7 @@ if (!empty($_GET["ok"])) {
                 </div>
             </div>
         </aside>
+        </div>
 
         <section class="auth-card admin-products">
             <div class="section-header">
@@ -397,14 +418,14 @@ if (!empty($_GET["ok"])) {
                                     $firstImage = $imagenes[0] ?? "";
                                 ?>
                                 <tr>
-                                    <td>
+                                    <td data-label="Imagen">
                                         <?php if ($firstImage !== "") { ?>
                                             <img class="thumb" src="<?php echo htmlspecialchars($firstImage); ?>" alt="" />
                                         <?php } ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($producto["nombre"] ?? ""); ?></td>
-                                    <td><?php echo htmlspecialchars($producto["categoria"] ?? "Sin categoria"); ?></td>
-                                    <td>
+                                    <td data-label="Producto"><?php echo htmlspecialchars($producto["nombre"] ?? ""); ?></td>
+                                    <td data-label="Categoria"><?php echo htmlspecialchars($producto["categoria"] ?? "Sin categoria"); ?></td>
+                                    <td data-label="Precio inicial">
                                         <div class="currency-stack">
                                             <?php foreach ($monedas as $code) { ?>
                                                 <div class="currency-line">
@@ -414,7 +435,7 @@ if (!empty($_GET["ok"])) {
                                         </div>
                                     </td>
                                     <?php if ($hasIncremento) { ?>
-                                        <td>
+                                        <td data-label="Incremento">
                                             <div class="currency-stack">
                                                 <?php foreach ($monedas as $code) { ?>
                                                     <div class="currency-line">
@@ -424,8 +445,8 @@ if (!empty($_GET["ok"])) {
                                             </div>
                                         </td>
                                     <?php } ?>
-                                    <td><span class="status-tag"><?php echo htmlspecialchars($producto["estado"] ?? ""); ?></span></td>
-                                    <td>
+                                    <td data-label="Estado"><span class="status-tag"><?php echo htmlspecialchars($producto["estado"] ?? ""); ?></span></td>
+                                    <td data-label="Ganador">
                                         <?php if (($producto["estado"] ?? "") === "finalizado") { ?>
                                             <?php $ganador = $ganadores[(int) $producto["id"]] ?? null; ?>
                                             <?php if ($ganador) { ?>
@@ -450,7 +471,7 @@ if (!empty($_GET["ok"])) {
                                             <span class="text-xs text-slate-400">-</span>
                                         <?php } ?>
                                     </td>
-                                    <td>
+                                    <td data-label="Acciones">
                                         <div class="action-row">
                                             <?php if ($isAdmin) { ?>
                                                 <?php if (($producto["estado"] ?? "") === "finalizado") { ?>
