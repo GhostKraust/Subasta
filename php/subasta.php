@@ -36,6 +36,12 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
+
 $monedas = ["MXN", "USD", "CAD"];
 $rates = ["MXN" => 1.0, "USD" => 1.0, "CAD" => 1.0];
 $ratesResult = $mysqli->query("SELECT moneda, tasa FROM exchange_rates");
@@ -82,7 +88,8 @@ $productos = [];
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
-$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo', 'pausado')";
+$selectExpiracion = $hasExpiracion ? ", p.fecha_expiracion" : "";
+$queryProductos = "SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria, pu.max_puja$selectIncremento$selectInicio$selectFin$selectExpiracion FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN (SELECT producto_id, MAX(monto_puja) AS max_puja FROM pujas GROUP BY producto_id) pu ON p.id = pu.producto_id WHERE p.estado IN ('activo', 'pausado')";
 if ($categoriaFiltro > 0) {
     $queryProductos .= " AND p.categoria_id = " . $categoriaFiltro;
 }
@@ -362,6 +369,11 @@ if ($resultProductos) {
                                 </div>
                             <?php } ?>
                         </div>
+                        <?php if (!empty($producto["fecha_expiracion"])) { ?>
+                            <div class="text-[11px] text-slate-500 font-medium mt-1">
+                                Válido hasta: <?php echo date("d/m/Y", strtotime($producto["fecha_expiracion"])); ?>
+                            </div>
+                        <?php } ?>
                     </div>
                     <a class="bg-[#f78da7] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#d66a85] hover:shadow-lg transition-all" href="producto.php?id=<?php echo (int) $producto["id"]; ?><?php echo $extraQuery; ?>">
                         <?php echo $estadoActual ? "Pujar" : "Ver detalles"; ?>

@@ -18,6 +18,7 @@ $categoriaId = (int) ($_POST["categoria_id"] ?? 0);
 $estado = trim($_POST["estado"] ?? "activo");
 $fechaInicioRaw = trim($_POST["fecha_inicio"] ?? "");
 $fechaFinRaw = trim($_POST["fecha_fin"] ?? "");
+$fechaExpiracionRaw = trim($_POST["fecha_expiracion"] ?? "");
 
 if ($id <= 0 || $nombre === "" || $descripcion === "" || $precioInicial <= 0 || $categoriaId <= 0) {
     http_response_code(400);
@@ -74,12 +75,19 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
+
 $selectIncremento = $hasIncremento ? ", incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", fecha_inicio" : "";
 $selectFin = $hasFin ? ", fecha_fin" : "";
+$selectExpiracion = $hasExpiracion ? ", fecha_expiracion" : "";
 $stmtPrev = $mysqli->prepare(
     "SELECT nombre, descripcion, imagen_url, categoria_id, estado, $precioColumn AS precio" .
-    "$selectIncremento$selectInicio$selectFin FROM productos WHERE id = ? LIMIT 1"
+    "$selectIncremento$selectInicio$selectFin$selectExpiracion FROM productos WHERE id = ? LIMIT 1"
 );
 if (!$stmtPrev) {
     http_response_code(500);
@@ -97,6 +105,7 @@ if (!$productoActual) {
 
 $fechaInicio = $hasInicio ? str_replace("T", " ", $fechaInicioRaw) : null;
 $fechaFin = $hasFin ? str_replace("T", " ", $fechaFinRaw) : null;
+$fechaExpiracion = ($hasExpiracion && $fechaExpiracionRaw !== "") ? str_replace("T", " ", $fechaExpiracionRaw) : null;
 
 if ($hasInicio && $fechaInicioRaw === "") {
     http_response_code(400);
@@ -162,13 +171,14 @@ if (isset($_FILES["imagen"]) && !empty($_FILES["imagen"]["name"][0])) {
 }
 $imagenAnterior = $productoActual["imagen_url"] ?? "";
 
-if ($hasIncremento || $hasInicio || $hasFin) {
+if ($hasIncremento || $hasInicio || $hasFin || $hasExpiracion) {
     if ($imagenUrl !== null) {
         $stmt = $mysqli->prepare(
             "UPDATE productos SET nombre = ?, descripcion = ?, imagen_url = ?, $precioColumn = ?" .
             ($hasIncremento ? ", incremento_minimo = ?" : "") .
             ($hasInicio ? ", fecha_inicio = ?" : "") .
             ($hasFin ? ", fecha_fin = ?" : "") .
+            ($hasExpiracion ? ", fecha_expiracion = ?" : "") .
             ", categoria_id = ?, estado = ? WHERE id = ?"
         );
         if (!$stmt) {
@@ -189,6 +199,10 @@ if ($hasIncremento || $hasInicio || $hasFin) {
             $types .= "s";
             $params[] = $fechaFin;
         }
+        if ($hasExpiracion) {
+            $types .= "s";
+            $params[] = $fechaExpiracion;
+        }
         $types .= "isi";
         $params[] = $categoriaId;
         $params[] = $estado;
@@ -200,6 +214,7 @@ if ($hasIncremento || $hasInicio || $hasFin) {
             ($hasIncremento ? ", incremento_minimo = ?" : "") .
             ($hasInicio ? ", fecha_inicio = ?" : "") .
             ($hasFin ? ", fecha_fin = ?" : "") .
+            ($hasExpiracion ? ", fecha_expiracion = ?" : "") .
             ", categoria_id = ?, estado = ? WHERE id = ?"
         );
         if (!$stmt) {
@@ -219,6 +234,10 @@ if ($hasIncremento || $hasInicio || $hasFin) {
         if ($hasFin) {
             $types .= "s";
             $params[] = $fechaFin;
+        }
+        if ($hasExpiracion) {
+            $types .= "s";
+            $params[] = $fechaExpiracion;
         }
         $types .= "isi";
         $params[] = $categoriaId;
@@ -270,6 +289,7 @@ $before = [
     "incremento_minimo" => $hasIncremento ? (float) ($productoActual["incremento_minimo"] ?? 0) : null,
     "fecha_inicio" => $hasInicio ? ($productoActual["fecha_inicio"] ?? null) : null,
     "fecha_fin" => $hasFin ? ($productoActual["fecha_fin"] ?? null) : null,
+    "fecha_expiracion" => $hasExpiracion ? ($productoActual["fecha_expiracion"] ?? null) : null,
     "categoria_id" => (int) ($productoActual["categoria_id"] ?? 0),
     "estado" => $productoActual["estado"] ?? ""
 ];
@@ -281,6 +301,7 @@ $after = [
     "incremento_minimo" => $hasIncremento ? $incrementoMinimo : null,
     "fecha_inicio" => $hasInicio ? $fechaInicio : null,
     "fecha_fin" => $hasFin ? $fechaFin : null,
+    "fecha_expiracion" => $hasExpiracion ? $fechaExpiracion : null,
     "categoria_id" => $categoriaId,
     "estado" => $estado
 ];

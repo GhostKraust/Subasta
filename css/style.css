@@ -419,7 +419,6 @@ h1 {
     border-spacing: 0 10px;
     font-size: 0.95rem;
     table-layout: fixed;
-    min-width: 980px;
 }
 
 .admin-table th,
@@ -467,6 +466,12 @@ h1 {
     border-right: 1px solid var(--line);
     border-top-right-radius: 16px;
     border-bottom-right-radius: 16px;
+}
+
+@media (min-width: 901px) {
+    .admin-table {
+        min-width: 980px;
+    }
 }
 
 .admin-table tbody tr:hover td {
@@ -1096,7 +1101,7 @@ h1 {
 /* --- Responsive Table (Card View) --- */
 @media (max-width: 900px) {
     .admin-table thead {
-        display: none; /* Ocultar encabezados en movil */
+        display: none;
     }
     
     .admin-table, 
@@ -1150,4 +1155,160 @@ h1 {
     .admin-table td[data-label="Acciones"] { display: block; margin-top: 10px; }
     .admin-table td[data-label="Acciones"]::before { display: none; }
     .admin-table td[data-label="Acciones"] .action-row { justify-content: center; }
+}
+    }
+    
+    .admin-table, 
+    .admin-table tbody, 
+    .admin-table tr, 
+    .admin-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .admin-table tbody tr {
+        margin-bottom: 20px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .admin-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        border-top: none !important; 
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+    }
+
+    .admin-table td:last-child {
+        border-bottom: none;
+    }
+
+    .admin-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        margin-right: 15px;
+        text-align: left;
+    }
+
+    /* Ajustes específicos para Imagen y Acciones */
+    .admin-table td[data-label="Imagen"] { justify-content: center; padding-bottom: 15px; }
+    .admin-table td[data-label="Imagen"]::before { display: none; }
+    
+    .admin-table td[data-label="Acciones"] { display: block; margin-top: 10px; }
+    .admin-table td[data-label="Acciones"]::before { display: none; }
+    .admin-table td[data-label="Acciones"] .action-row { justify-content: center; }
+}
+
+/* --- History Table Improvements --- */
+.date-cell {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.date-cell .date { font-weight: 600; color: var(--ink); }
+.date-cell .time { font-size: 0.8rem; color: var(--muted); }
+
+.product-cell {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.product-cell .product-name { font-weight: 600; }
+.product-cell .product-id { font-size: 0.75rem; color: var(--muted); }
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.badge-default { background: #f3f4f6; color: #64748b; }
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-info    { background: #e0f2fe; color: #0369a1; }
+.badge-warning { background: #fef9c3; color: #854d0e; }
+.badge-danger  { background: #fee2e2; color: #991b1b; }
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-blue-dark));
+    color: white;
+    display: grid;
+    place-items: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.changes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.change-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+.change-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+.change-diff {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.val-old {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+.val-new {
+    color: var(--ink);
+    font-weight: 600;
+    background: rgba(122, 148, 109, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.arrow { color: #cbd5e1; font-weight: bold; }
+.no-changes { font-style: italic; color: #cbd5e1; font-size: 0.85rem; }
+
+@media (max-width: 900px) {
+    .admin-table td.changes-col {
+        display: block;
+        text-align: left;
+    }
+    .admin-table td.changes-col::before {
+        display: block;
+        margin-bottom: 8px;
+    }
 }

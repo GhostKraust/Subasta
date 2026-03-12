@@ -15,6 +15,7 @@ $incrementoMinimo = (float) ($_POST["incremento_minimo"] ?? 0);
 $categoriaId = (int) ($_POST["categoria_id"] ?? 0);
 $fechaInicioRaw = trim($_POST["fecha_inicio"] ?? "");
 $fechaFinRaw = trim($_POST["fecha_fin"] ?? "");
+$fechaExpiracionRaw = trim($_POST["fecha_expiracion"] ?? "");
 
 if ($nombre === "" || $descripcion === "" || $precioInicial <= 0 || $categoriaId <= 0) {
     http_response_code(400);
@@ -119,8 +120,15 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
+
 $fechaInicio = $hasInicio ? str_replace("T", " ", $fechaInicioRaw) : null;
 $fechaFin = $hasFin ? str_replace("T", " ", $fechaFinRaw) : null;
+$fechaExpiracion = ($hasExpiracion && $fechaExpiracionRaw !== "") ? str_replace("T", " ", $fechaExpiracionRaw) : null;
 
 if ($hasInicio && $fechaInicioRaw === "") {
     http_response_code(400);
@@ -145,7 +153,7 @@ if ($hasInicio && $hasFin) {
     }
 }
 
-if ($hasIncremento || $hasInicio || $hasFin) {
+if ($hasIncremento || $hasInicio || $hasFin || $hasExpiracion) {
     $columns = "nombre, descripcion, imagen_url, $precioColumn";
     $values = "?, ?, ?, ?";
     $types = "sssd";
@@ -168,6 +176,12 @@ if ($hasIncremento || $hasInicio || $hasFin) {
         $values .= ", ?";
         $types .= "s";
         $params[] = $fechaFin;
+    }
+    if ($hasExpiracion) {
+        $columns .= ", fecha_expiracion";
+        $values .= ", ?";
+        $types .= "s";
+        $params[] = $fechaExpiracion;
     }
 
     $columns .= ", categoria_id, estado";
@@ -210,6 +224,7 @@ $changes = [
         "incremento_minimo" => $hasIncremento ? $incrementoMinimo : null,
         "fecha_inicio" => $hasInicio ? $fechaInicio : null,
         "fecha_fin" => $hasFin ? $fechaFin : null,
+        "fecha_expiracion" => $hasExpiracion ? $fechaExpiracion : null,
         "categoria_id" => $categoriaId,
         "estado" => "activo"
     ]

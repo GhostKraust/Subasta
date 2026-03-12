@@ -37,6 +37,18 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
+
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
+
 $monedas = ["MXN", "USD", "CAD"];
 $moneda = strtoupper($_GET["moneda"] ?? "MXN");
 if (!in_array($moneda, $monedas, true)) {
@@ -239,6 +251,105 @@ if (!empty($_GET["ok"])) {
             .product-creation-group { display: block; }
             .product-preview-wrapper { display: none; } /* En movil se usa el boton de modal */
         }
+
+        /* --- DISEÑO AISLADO PARA TABLA DE PRODUCTOS --- */
+        .products-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .products-table th {
+            text-align: left;
+            padding: 16px;
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .products-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #334155;
+            background: #ffffff;
+        }
+
+        .products-table tbody tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* RESPONSIVE: Vista de Tarjetas para Celular */
+        @media (max-width: 900px) {
+            .products-table thead {
+                display: none;
+            }
+            
+            .products-table, .products-table tbody, .products-table tr, .products-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .products-table tbody tr {
+                margin-bottom: 24px;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                background: #ffffff;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            }
+
+            .products-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: right;
+                padding: 12px 0;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .products-table td:last-child {
+                border-bottom: none;
+            }
+
+            .products-table td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #94a3b8;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                margin-right: 15px;
+                text-align: left;
+            }
+
+            /* Ajuste especifico para la imagen en movil */
+            .products-table td[data-label="Imagen"] { justify-content: center; padding-bottom: 20px; }
+            .products-table td[data-label="Imagen"]::before { display: none; }
+            .products-table td[data-label="Imagen"] .thumb { width: 100px; height: 100px; }
+
+            /* Ajuste para acciones */
+            .products-table td[data-label="Acciones"] { display: block; margin-top: 15px; }
+            .products-table td[data-label="Acciones"]::before { display: none; }
+            .products-table td[data-label="Acciones"] .action-row { justify-content: center; width: 100%; }
+        }
     </style>
 </head>
 <body class="auth-page products-page">
@@ -316,6 +427,10 @@ if (!empty($_GET["ok"])) {
                         <small class="field-hint">Agrega la columna incremento_minimo en la tabla productos.</small>
                     <?php } ?>
                 </label>
+                <label class="field">
+                    <span>Fecha de expiración (Validez)</span>
+                    <input name="fecha_expiracion" type="datetime-local" />
+                </label>
                 <?php if ($hasInicio) { ?>
                     <label class="field">
                         <span>Fecha y hora de inicio</span>
@@ -381,7 +496,7 @@ if (!empty($_GET["ok"])) {
                 </div>
             </div>
             <div class="table-wrap">
-                <table class="admin-table">
+                <table class="products-table">
                     <thead>
                         <tr>
                             <th>Imagen</th>

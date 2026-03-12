@@ -36,11 +36,18 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
+
 $producto = null;
 $selectIncremento = $hasIncremento ? ", incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", fecha_inicio" : "";
 $selectFin = $hasFin ? ", fecha_fin" : "";
-$stmt = $mysqli->prepare("SELECT id, nombre, descripcion, imagen_url, categoria_id, estado, $precioColumn AS precio$selectIncremento$selectInicio$selectFin FROM productos WHERE id = ? LIMIT 1");
+$selectExpiracion = $hasExpiracion ? ", fecha_expiracion" : "";
+$stmt = $mysqli->prepare("SELECT id, nombre, descripcion, imagen_url, categoria_id, estado, $precioColumn AS precio$selectIncremento$selectInicio$selectFin$selectExpiracion FROM productos WHERE id = ? LIMIT 1");
 if ($stmt) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -133,6 +140,10 @@ $imagenes = array_map(function($path) {
                     <?php if (!$hasIncremento) { ?>
                         <small class="field-hint">Agrega la columna incremento_minimo en la tabla productos.</small>
                     <?php } ?>
+                </label>
+                <label class="field">
+                    <span>Fecha de expiración (Validez)</span>
+                    <input name="fecha_expiracion" type="datetime-local" value="<?php echo (!empty($producto["fecha_expiracion"])) ? date("Y-m-d\TH:i", strtotime($producto["fecha_expiracion"])) : ""; ?>" />
                 </label>
                 <?php if ($hasInicio) { ?>
                     <?php $inicioValor = !empty($producto["fecha_inicio"]) ? date("Y-m-d\TH:i", strtotime($producto["fecha_inicio"])) : ""; ?>

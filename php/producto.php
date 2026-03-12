@@ -39,6 +39,11 @@ if ($checkFin && $checkFin->num_rows > 0) {
     $hasFin = true;
 }
 
+$hasExpiracion = false;
+$checkExp = $mysqli->query("SHOW COLUMNS FROM productos LIKE 'fecha_expiracion'");
+if ($checkExp && $checkExp->num_rows > 0) {
+    $hasExpiracion = true;
+}
 
 $hasOrigen = false;
 $checkOrigen = $mysqli->query("SHOW COLUMNS FROM pujas LIKE 'origen'");
@@ -50,7 +55,8 @@ $producto = null;
 $selectIncremento = $hasIncremento ? ", p.incremento_minimo" : "";
 $selectInicio = $hasInicio ? ", p.fecha_inicio" : "";
 $selectFin = $hasFin ? ", p.fecha_fin" : "";
-$stmt = $mysqli->prepare("SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria$selectIncremento$selectInicio$selectFin FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.id = ? LIMIT 1");
+$selectExpiracion = $hasExpiracion ? ", p.fecha_expiracion" : "";
+$stmt = $mysqli->prepare("SELECT p.id, p.nombre, p.descripcion, p.imagen_url, p.estado, p.$precioColumn AS precio, c.nombre AS categoria$selectIncremento$selectInicio$selectFin$selectExpiracion FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.id = ? LIMIT 1");
 if ($stmt) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -194,10 +200,10 @@ if (count($volverParams) > 0) {
         (function() {
             <?php
                 $endTime = null;
-                if ($fin !== null) {
-                    $endTime = $fin->getTimestamp() * 1000;
-                } elseif ($inicio !== null && $ahora < $inicio) {
+                if ($inicio !== null && $ahora < $inicio) {
                     $endTime = $inicio->getTimestamp() * 1000;
+                } elseif ($fin !== null) {
+                    $endTime = $fin->getTimestamp() * 1000;
                 }
             ?>
             
@@ -310,6 +316,12 @@ if (count($volverParams) > 0) {
                         <div class="text-center">
                             <div class="text-sm uppercase text-slate-400 font-semibold">Minimo</div>
                             <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">$<?php echo number_format($minimo, 2); ?></div>
+                        </div>
+                    <?php } ?>
+                    <?php if (!empty($producto["fecha_expiracion"])) { ?>
+                        <div class="text-center">
+                            <div class="text-sm uppercase text-slate-400 font-semibold">Válido hasta</div>
+                            <div class="text-3xl font-bold text-slate-700 dark:text-slate-200"><?php echo date("d/m/Y", strtotime($producto["fecha_expiracion"])); ?></div>
                         </div>
                     <?php } ?>
                 </div>
