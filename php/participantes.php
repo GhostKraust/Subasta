@@ -137,6 +137,43 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="../css/style.css" rel="stylesheet" />
     <link href="../css/dashboard.css" rel="stylesheet" />
+    <style>
+        .participants-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .participants-table th {
+            text-align: left;
+            padding: 16px;
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .participants-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #334155;
+        }
+        .participants-table tbody tr:hover td {
+            background-color: #f8fafc;
+        }
+        @media (max-width: 900px) {
+            .participants-table thead { display: none; }
+            .participants-table, .participants-table tbody, .participants-table tr, .participants-table td { display: block; width: 100%; }
+            .participants-table tr { margin-bottom: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+            .participants-table td { display: flex; justify-content: space-between; align-items: center; text-align: right; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+            .participants-table td:last-child { border-bottom: none; }
+            .participants-table td::before { content: attr(data-label); font-weight: 700; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; margin-right: 15px; text-align: left; }
+        }
+    </style>
 </head>
 <body class="auth-page">
     <header class="dash-header">
@@ -197,7 +234,7 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
         <section class="card">
             <div class="card-title">Lista de Participantes por Producto</div>
             <div class="table-wrap">
-                <table class="admin-table">
+                <table class="participants-table">
                     <thead>
                         <tr>
                             <th>Producto</th>
@@ -216,12 +253,12 @@ $exportQuery = count($exportParams) > 0 ? "&" . implode("&", $exportParams) : ""
                         <?php } else { ?>
                             <?php foreach ($participantes as $row) { ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($row["producto_nombre"] ?? ""); ?></td>
-                                    <td><?php echo htmlspecialchars($row["nombre_usuario"] ?? ""); ?></td>
-                                    <td style="word-break: break-all;"><?php echo htmlspecialchars($row["correo_usuario"] ?? "-"); ?></td>
-                                    <td><?php echo htmlspecialchars($row["telefono_usuario"] ?? "-"); ?></td>
-                                    <td>$<?php echo number_format((float) ($row["monto_puja"] ?? 0), 2); ?></td>
-                                    <td><?php echo htmlspecialchars($row["fecha_puja"] ?? "-"); ?></td>
+                                    <td data-label="Producto"><?php echo htmlspecialchars($row["producto_nombre"] ?? ""); ?></td>
+                                    <td data-label="Participante"><?php echo htmlspecialchars($row["nombre_usuario"] ?? ""); ?></td>
+                                    <td data-label="Correo" style="word-break: break-all;"><?php echo htmlspecialchars($row["correo_usuario"] ?? "-"); ?></td>
+                                    <td data-label="Telefono"><?php echo htmlspecialchars($row["telefono_usuario"] ?? "-"); ?></td>
+                                    <td data-label="Monto de Puja">$<?php echo number_format((float) ($row["monto_puja"] ?? 0), 2); ?></td>
+                                    <td data-label="Fecha de Puja"><?php echo htmlspecialchars($row["fecha_puja"] ?? "-"); ?></td>
                                 </tr>
                             <?php } ?>
                         <?php } ?>

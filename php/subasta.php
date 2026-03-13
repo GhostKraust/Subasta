@@ -115,12 +115,47 @@ if ($resultProductos) {
     }
 }
 
+$footerSections = [
+    [
+        "title" => "About Us",
+        "title_url" => "https://pasitosdeluz.org/about-us/",
+        "links" => [
+            ["label" => "Pasitos de Luz History", "url" => "https://pasitosdeluz.org/about-us/pasitos-de-luz-history/"],
+            ["label" => "Casa Connor", "url" => "https://pasitosdeluz.org/about-us/casa-connor/"]
+        ]
+    ],
+    [
+        "title" => "Board of Directors",
+        "title_url" => "https://pasitosdeluz.org/about-us/board-of-directors/",
+        "links" => [
+            ["label" => "Love Pasitos Monthly", "url" => "https://pasitosdeluz.org/donate-1/donate1-2/"],
+            ["label" => "Volunteer", "url" => "https://pasitosdeluz.org/donate-1/volunteer/"]
+        ]
+    ],
+    [
+        "title" => "List of Necessities",
+        "title_url" => "https://pasitosdeluz.org/other-ways/list-of-necessities/",
+        "links" => [
+            ["label" => "Financials", "url" => "https://pasitosdeluz.org/donate/financials/"],
+            ["label" => "Campaigns", "url" => "https://pasitosdeluz.org/donate-1/"]
+        ]
+    ],
+    [
+        "title" => "Events",
+        "title_url" => "https://pasitosdeluz.org/events/",
+        "links" => [
+            ["label" => "News", "url" => "https://pasitosdeluz.org/news/"],
+            ["label" => "Frequently Asked Questions", "url" => "https://pasitosdeluz.org/frequently-asked-questions-2/"]
+        ]
+    ]
+];
+
 ?>
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Subasta-Pasitos de Luz-Casa Connor</title>
+<title>Subasta.pasitosdelus.org</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
@@ -148,50 +183,185 @@ if ($resultProductos) {
             },
         };
     </script>
+    <style>
+        @media (min-width: 992px) {
+            .navbar .nav-item.dropdown:hover > .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+        }
+
+        .navbar .dropdown-menu {
+            border: 0;
+            border-radius: 1rem;
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+            padding: 0.65rem 0;
+            min-width: 230px;
+        }
+
+        .navbar .dropdown-item {
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+        }
+
+        .navbar .dropdown-item:hover {
+            background: #fbe1e9;
+            color: #111827;
+        }
+
+        .pasitos-footer {
+            background: #f78da7;
+            color: #ffffff;
+        }
+
+        .footer-hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.56rem;
+        }
+
+        .footer-hero .footer-logo img {
+            max-height: 150px;
+        }
+
+        .footer-cta-btn {
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            background: transparent;
+            padding: 10px 22px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .footer-cta-btn:hover {
+            background-color: #ffffff;
+            color: #00B4FF;
+            border-color: #ffffff;
+        }
+
+        .footer-links a {
+            color: #ffffff;
+            white-space-collapse: preserve-breaks;
+            font-size: small;
+            font-weight: 1000;
+            letter-spacing: 0.00em;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover,
+        .footer-heading:hover {
+            color: #00B4FF;
+        }
+
+        .footer-heading {
+            display: inline-block;
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.07em;
+            margin-bottom: 0.75rem;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .footer-links li + li {
+            margin-top: 0.35rem;
+        }
+    </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
 <header>
     <div class="top-bar py-2 text-white px-4 d-flex justify-content-between align-items-center">
         <div class="fw-bold">
-            <i class="bi bi-telephone-fill me-2"></i> Contáctanos: (+52 322 135 6302)
+            <i class="bi bi-telephone-fill me-2" ></i><a href="tel:+52%203221356302">Contáctanos: (+52 322 135 6302)</a> 
         </div>
         <div class="d-flex gap-2 fs-5">
-            <a href="#" class="top-icon"><i class="bi bi-telephone"></i></a>
-            <a href="#" class="top-icon"><i class="bi bi-whatsapp"></i></a>
-            <a href="#" class="top-icon"><i class="bi bi-geo-alt-fill"></i></a>
-            <a href="#" class="top-icon"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="top-icon"><i class="bi bi-instagram"></i></a>
-            <a href="#" class="top-icon"><i class="bi bi-youtube"></i></a>
+            <a href= "tel:+523221037938" class="top-icon"><i class="bi bi-telephone"></i></a>
+            <a href="https://api.whatsapp.com/send/?phone=523221356302&text&type=phone_number&app_absent=0" class="top-icon"><i class="bi bi-whatsapp"></i></a>
+            <a href="https://www.google.com/maps/place/Pasitos+de+Luz+-+Casa+Connor/@20.7124787,-105.2493829,15z/data=!4m5!3m4!1s0x0:0xe4e780d17677252d!8m2!3d20.7124787!4d-105.2493829?shorturl=1" class="top-icon"><i class="bi bi-geo-alt-fill"></i></a>
+            <a href="https://www.facebook.com/pasitosdeluz2" class="top-icon"><i class="bi bi-facebook"></i></a>
+            <a href="https://www.instagram.com/pasitosdeluz/?hl=es" class="top-icon"><i class="bi bi-instagram"></i></a>
+            <a href="https://www.youtube.com/@PasitosdeLuz" class="top-icon"><i class="bi bi-youtube"></i></a>
         </div>
     </div>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
         <div class="container-fluid px-4">
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="https://pasitosdeluz.org/">
                 <img src="../Imagenes/logo_pasitos-removebg-preview.png" alt="Pasitos de Luz" class="me-2 logo-pasitos">
                 <img src="../Imagenes/connor29.png" alt="Casa Connor" height="55">
             </a>
 
             <div class="navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto fw-semibold" style="font-size: 0.95rem;">
-                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">About Us <i class="bi bi-chevron-down small"></i></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Our Services <i class="bi bi-chevron-down small"></i></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Meet Our Kids</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Donate <i class="bi bi-chevron-down small"></i></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Campaigns <i class="bi bi-chevron-down small"></i></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Other Ways to Help <i class="bi bi-chevron-down small"></i></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Events</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Contact us <i class="bi bi-chevron-down small"></i></a></li>
+                    <li class="nav-item"><a class="nav-link active" href="https://pasitosdeluz.org/">Home</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="https://pasitosdeluz.org/about-us/" role="button" data-bs-toggle="dropdown" aria-expanded="false">About Us</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/our-mission-vision-and-values/">Our Mission, Vision, Values</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/status-recognition/">Status/Recognition</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/pasitos-de-luz-history/">Pasitos de Luz History</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/casa-connor/">Casa Connor</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/board-of-directors/">Board of Directors</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/board-of-directors/">Our Milestone Timeline</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/about-us/quick-facts/">Quick Facts</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/frequently-asked-questions-2/">Frequently Asked Questions</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="https://pasitosdeluz.org/our-services/" role="button" data-bs-toggle="dropdown" aria-expanded="false">Our Services</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/our-services/therapy-rehabilitation/">Therapy/rehabilitation</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/our-services/educational-programs/">Educational programs</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/our-services/nutrition-and-wellbeing/">Nutrition and wellbeing</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/our-services/recreation/">Recreation </a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/our-impact/">Our impact</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="https://pasitosdeluz.org/meet-our-kids/">Meet Our Kids</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="https://pasitosdeluz.org/donate/" role="button" data-bs-toggle="dropdown" aria-expanded="false">Donate</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/donate/legacy-and-planned-giving/">Legacy and planned giving</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/donate/financials/">Finacials</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="https://pasitosdeluz.org/donate-1/" role="button" data-bs-toggle="dropdown" aria-expanded="false">Campaigns</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/donate-1/donate1-2/">Love pasitos monthly</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/give-a-day-of-hope-for-2025/">Give a Day of Hope</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="https://pasitosdeluz.org/other-ways/" role="button" data-bs-toggle="dropdown" aria-expanded="false">Other Ways to Help</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/donate-1/volunteer/">Volunteer</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/other-ways/list-of-necessities/">List of necessities</a></li></a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="https://pasitosdeluz.org/events/">Events</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="https://pasitosdeluz.org/contact-us/" role="button" data-bs-toggle="dropdown" aria-expanded="false">Contact us</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/our-tours/">Tours</a></li>
+                            <li><a class="dropdown-item" href="https://pasitosdeluz.org/news/">News</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item d-flex align-items-center">
-                        <a class="nav-link nav-flag" href="#" aria-label="Mexico">
+                        <a class="nav-link nav-flag" href="https://pasitosdeluz.org/es/inicio/" aria-label="Mexico">
                             <img src="https://flagcdn.com/w20/mx.png" alt="Mexico">
                         </a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-donar px-4 py-2 fw-bold shadow-sm">
-                        DONAR <i class="bi bi-heart-fill ms-1"></i>
+                    <button class="btn btn-donar px-4 py-2 fw-bold shadow-sm" >
+                         <a href="https://pasitosdeluz.org/donate/">DONAR</a> <i class="bi bi-heart-fill ms-1"></i>
                     </button>
                 </div>
             </div>
@@ -390,23 +560,23 @@ if ($resultProductos) {
 </button>
 </div>
     </main>
-    <footer>
-        <div class="py-5" style="background: #f78da7;">
+    <footer class="pasitos-footer">
+        <div class="py-5">
             <div class="container">
                 <!-- Header con logos y tagline -->
-                <div class="row align-items-center mb-5">
-                    <div class="col-md-4 text-md-start text-center mb-3 mb-md-0">
-                        <img src="../Imagenes/footer1.png" alt="Logos" height="80">
+                <div class="footer-hero mb-5">
+                    <div class="footer-logo text-center text-md-start">
+                        <img src="../Imagenes/footer1.png" alt="Logos">
                     </div>
-                    <div class="col-md-4 text-center">
-                        <h2 class="fw-bold italic" style="font-size: 1.8rem; font-style: italic; color: #ffffff;">
+                    <div class="text-center">
+                        <h2 class="fw-bold" style="font-size: 1.8rem; font-style: italic; color: #ffffff;">
                             "Working with love"
                         </h2>
                     </div>
-                    <div class="col-md-4 text-md-end text-center mb-3 mb-md-0">
-                        <button class="btn" style="border: 2px solid #ffffff; color: #ffffff; background: transparent; padding: 10px 20px; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#666666'; this.style.color='#00B4FF'; this.style.borderColor='#666666';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ffffff'; this.style.borderColor='#ffffff';">
+                    <div class="text-center text-md-end">
+                        <a class="footer-cta-btn d-inline-block text-decoration-none" href="https://pasitosdeluz.us7.list-manage.com/subscribe?u=eef627f1c0a1639264454b16b&id=2ac7ab04c2" target="_blank" rel="noopener">
                             Join Our Newsletter
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -431,11 +601,11 @@ if ($resultProductos) {
                 <div class="row justify-content-center mb-4">
                     <div class="col-auto">
                         <div class="d-flex gap-3 justify-content-center" style="font-size: 1.8rem;">
-                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-telephone"></i></a>
-                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-whatsapp"></i></a>
-                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-geo-alt"></i></a>
-                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-facebook"></i></a>
-                            <a href="#" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-instagram"></i></a>
+                            <a href="tel:+523221037938" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-telephone"></i></a>
+                            <a href="https://api.whatsapp.com/send/?phone=523221356302&text&type=phone_number&app_absent=0" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-whatsapp"></i></a>
+                            <a href="https://www.google.com/maps/place/Pasitos+de+Luz+-+Casa+Connor/@20.7124787,-105.2493829,15z/data=!4m5!3m4!1s0x0:0xe4e780d17677252d!8m2!3d20.7124787!4d-105.2493829?shorturl=1" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-geo-alt"></i></a>
+                            <a href="https://www.facebook.com/pasitosdeluz2" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-facebook"></i></a>
+                            <a href="https://www.instagram.com/pasitosdeluz/?hl=es" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-instagram"></i></a>
                             <a href="https://www.youtube.com/@PasitosdeLuz" style="color: #f78da7; background: #ffffff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;" onmouseover="this.style.color='#00B4FF'; this.style.transform='translateY(-8px)';" onmouseout="this.style.color='#f78da7'; this.style.transform='translateY(0)';"><i class="bi bi-youtube"></i></a>
                         </div>
                     </div>
@@ -450,47 +620,25 @@ if ($resultProductos) {
 
                 <!-- Links Section -->
                 <div class="row text-center footer-links g-4">
-                    <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3" style="color: #ffffff;">About Us</h6>
-                        <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="https://pasitosdeluz.org/about-us/pasitos-de-luz-history/" style="color: #ffffff;">Pasitos de Luz History</a></li>
-                            <li><a href="https://pasitosdeluz.org/about-us/casa-connor/" style="color: #ffffff;">Casa Connor</a></li>
-                        </ul>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3" style="color: #ffffff;">Board of Directors</h6>
-                        <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="https://pasitosdeluz.org/donate-1/donate1-2/" style="color: #ffffff;">Love Pasitos Monthly</a></li>
-                            <li><a href="https://pasitosdeluz.org/donate-1/volunteer/" style="color: #ffffff;">Volunteer</a></li>
-                        </ul>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3" style="color: #ffffff;">List of Necessities</h6>
-                        <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="#" style="color: #ffffff;">Financials</a></li>
-                            <li><a href="#" style="color: #ffffff;">Campaigns</a></li>
-                        </ul>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <h6 class="fw-bold mb-3" style="color: #ffffff;">Events</h6>
-                        <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="#" style="color: #ffffff;">News</a></li>
-                            <li><a href="#" style="color: #ffffff;">Frequently Asked Questions</a></li>
-                        </ul>
-                    </div>
+                    <?php foreach ($footerSections as $section) { ?>
+                        <div class="col-6 col-md-3">
+                            <a class="footer-heading" href="<?php echo htmlspecialchars($section["title_url"]); ?>" target="_blank" rel="noopener">
+                                <?php echo htmlspecialchars($section["title"]); ?>
+                            </a>
+                            <ul class="list-unstyled small">
+                                <?php foreach ($section["links"] as $link) { ?>
+                                    <li>
+                                        <a href="<?php echo htmlspecialchars($link["url"]); ?>" target="_blank" rel="noopener">
+                                            <?php echo htmlspecialchars($link["label"]); ?>
+                                        </a>
+                                    </li>
+                                <?php } ?>
+                            </ul>
+                        </div>
+                    <?php } ?>
                 </div>
                 <div class="text-center small mt-4">
-                    <a href="../php/login.php" class="text-decoration-none" style="color: #ffffff;">Administracion: agregar productos</a>
-                </div>
-            </div>
-        </div>
-    </footer>
-                            <li><a href="#" style="color: #ffffff  ;">Frequently Asked Questions</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="text-center small mt-4">
-                    <a href="../php/login.php" class="text-decoration-none" style="color: #ffffff;">Administracion: agregar productos</a>
+                    <a href="../php/login.php" class="text-decoration-none" style="color: #ffffff; letter-spacing: 0.05em;">Administracion: agregar productos</a>
                 </div>
             </div>
         </div>
@@ -500,14 +648,28 @@ if ($resultProductos) {
     document.addEventListener("DOMContentLoaded", function () {
         var toggler = document.querySelector(".navbar-toggler");
         var collapse = document.getElementById("navbarNav");
+        var desktopMediaQuery = window.matchMedia("(min-width: 992px)");
         if (!toggler || !collapse) {
-            return;
+            // Continue running menu helpers even if collapsible toggle is missing.
+        } else {
+            toggler.addEventListener("click", function (event) {
+                event.preventDefault();
+                collapse.classList.toggle("show");
+                toggler.setAttribute("aria-expanded", collapse.classList.contains("show") ? "true" : "false");
+            });
         }
 
-        toggler.addEventListener("click", function (event) {
-            event.preventDefault();
-            collapse.classList.toggle("show");
-            toggler.setAttribute("aria-expanded", collapse.classList.contains("show") ? "true" : "false");
+        var dropdownParents = document.querySelectorAll(".navbar .nav-item.dropdown > .nav-link");
+        dropdownParents.forEach(function (link) {
+            link.addEventListener("click", function (event) {
+                var destination = link.getAttribute("href");
+                if (!desktopMediaQuery.matches || !destination || destination === "#") {
+                    return;
+                }
+
+                event.preventDefault();
+                window.location.href = destination;
+            });
         });
 
         // Autoplay de carruseles

@@ -1156,60 +1156,6 @@ h1 {
     .admin-table td[data-label="Acciones"]::before { display: none; }
     .admin-table td[data-label="Acciones"] .action-row { justify-content: center; }
 }
-    }
-    
-    .admin-table, 
-    .admin-table tbody, 
-    .admin-table tr, 
-    .admin-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .admin-table tbody tr {
-        margin-bottom: 20px;
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        background: #ffffff;
-        padding: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    .admin-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 10px 0;
-        border-bottom: 1px solid #f0f0f0;
-        border-top: none !important; 
-        border-left: none !important;
-        border-right: none !important;
-        border-radius: 0 !important;
-    }
-
-    .admin-table td:last-child {
-        border-bottom: none;
-    }
-
-    .admin-table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        color: var(--muted);
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        margin-right: 15px;
-        text-align: left;
-    }
-
-    /* Ajustes específicos para Imagen y Acciones */
-    .admin-table td[data-label="Imagen"] { justify-content: center; padding-bottom: 15px; }
-    .admin-table td[data-label="Imagen"]::before { display: none; }
-    
-    .admin-table td[data-label="Acciones"] { display: block; margin-top: 10px; }
-    .admin-table td[data-label="Acciones"]::before { display: none; }
-    .admin-table td[data-label="Acciones"] .action-row { justify-content: center; }
-}
 
 /* --- History Table Improvements --- */
 .date-cell {

@@ -171,8 +171,8 @@ if ($resultPujas) {
                         </div>
                     </div>
                 </div>
-                <div class="note">Ver ganadores de subastas cerradas.</div>
-                <a class="btn ghost btn-block" href="ganadores.php">Ver ganadores</a>
+                <div class="note" ">Ver ganadores de subastas cerradas.</div>
+                <a class="btn ghost btn-block" href="ganadores.php" style="text-align: center;">Ver ganadores</a>
             </article>
 
             <article class="card">
@@ -211,38 +211,47 @@ if ($resultPujas) {
                         </div>
                     <?php } ?>
                 </div>
-                <div class="note">Puedes editar productos antes de publicar.</div>
+                <div class="note"></div>
             </article>
 
             <article class="card">
                 <div class="card-title">Ultimas pujas</div>
-                <div class="table">
-                    <div class="row head">
-                        <span>Producto</span>
-                        <span>Monto</span>
-                        <span><?php echo $hasOrigen ? "Origen" : "Fecha"; ?></span>
-                    </div>
-                    <?php if (count($ultimasPujas) === 0) { ?>
-                        <div class="row">
-                            <span>Sin pujas</span>
-                            <span>$0</span>
-                            <span>-</span>
-                        </div>
-                    <?php } else { ?>
-                        <?php foreach ($ultimasPujas as $puja) { ?>
-                            <div class="row">
-                                <span><?php echo htmlspecialchars($puja["producto"] ?? ""); ?></span>
-                                <span>$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></span>
-                                <span>
-                                    <?php if ($hasOrigen) { ?>
-                                        <?php echo htmlspecialchars($puja["origen"] ?? "-"); ?>
-                                    <?php } else { ?>
-                                        <?php echo htmlspecialchars(date("d/m/Y H:i", strtotime($puja["fecha_puja"] ?? ""))); ?>
-                                    <?php } ?>
-                                </span>
-                            </div>
-                        <?php } ?>
-                    <?php } ?>
+                <div class="recent-bids-wrap">
+                    <table class="recent-bids-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Usuario</th>
+                                <th class="is-amount">Monto</th>
+                                <th><?php echo $hasOrigen ? "Origen" : "Fecha"; ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($ultimasPujas) === 0) { ?>
+                                <tr>
+                                    <td>Sin pujas</td>
+                                    <td>-</td>
+                                    <td class="is-amount">$0</td>
+                                    <td>-</td>
+                                </tr>
+                            <?php } else { ?>
+                                <?php foreach ($ultimasPujas as $puja) { ?>
+                                    <tr>
+                                        <td title="<?php echo htmlspecialchars($puja["producto"] ?? ""); ?>"><?php echo htmlspecialchars($puja["producto"] ?? ""); ?></td>
+                                        <td title="<?php echo htmlspecialchars($puja["nombre_usuario"] ?? ""); ?>"><?php echo htmlspecialchars($puja["nombre_usuario"] ?? "-"); ?></td>
+                                        <td class="is-amount">$<?php echo number_format((float) ($puja["monto_puja"] ?? 0), 2); ?></td>
+                                        <td>
+                                            <?php if ($hasOrigen) { ?>
+                                                <?php echo htmlspecialchars($puja["origen"] ?? "-"); ?>
+                                            <?php } else { ?>
+                                                <?php echo htmlspecialchars(date("d/m/Y H:i", strtotime($puja["fecha_puja"] ?? ""))); ?>
+                                            <?php } ?>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                            <?php } ?>
+                        </tbody>
+                    </table>
                 </div>
             </article>
         </section>

@@ -95,7 +95,7 @@ body {
 
 .filters {
   margin-top: 18px;
-  display: flex;
+  display: ruby;
   gap: 16px;
   flex-wrap: wrap;
 }
