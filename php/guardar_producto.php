@@ -1,11 +1,17 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 require_once __DIR__ . "/lib/historial_productos.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
     exit("Metodo no permitido.");
+}
+
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    http_response_code(419);
+    exit("Solicitud invalida.");
 }
 
 $nombre = trim($_POST["nombre"] ?? "");

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . "/lib/security.php";
+start_secure_session();
 require_once __DIR__ . "/../config/db.php";
 
 $id = (int) ($_GET["id"] ?? 0);
@@ -371,6 +373,7 @@ if (count($volverParams) > 0) {
             <?php } ?>
             <?php if ($estadoActual) { ?>
                 <form class="grid gap-3" action="pujar.php" method="post">
+                    <?php echo csrf_input(); ?>
                     <input type="hidden" name="producto_id" value="<?php echo (int) $producto["id"]; ?>" />
                     <input type="hidden" name="categoria" value="<?php echo (int) $categoriaFiltro; ?>" />
                     <input type="hidden" name="orden" value="<?php echo htmlspecialchars($ordenFiltro); ?>" />

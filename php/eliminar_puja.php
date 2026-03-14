@@ -7,6 +7,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit("Metodo no permitido.");
 }
 
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    header("Location: panel.php?puja=error");
+    exit;
+}
+
 $id = (int) ($_POST["id"] ?? 0);
 $moneda = strtoupper($_POST["moneda"] ?? "MXN");
 if (!in_array($moneda, ["MXN", "USD", "CAD"], true)) {

@@ -104,6 +104,7 @@ $imagenes = array_map(function($path) {
             <h1>Editar producto</h1>
             <p class="lead">Actualiza la informacion del producto seleccionado.</p>
             <form class="auth-form" action="actualizar_producto.php" method="post" enctype="multipart/form-data">
+                <?php echo csrf_input(); ?>
                 <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
                 <label class="field">
                     <span>Nombre del producto</span>

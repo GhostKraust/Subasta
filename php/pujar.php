@@ -1,9 +1,17 @@
 <?php
+require_once __DIR__ . "/lib/security.php";
+start_secure_session();
 require_once __DIR__ . "/../config/db.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
     exit("Metodo no permitido.");
+}
+
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    $productoIdError = (int) ($_POST["producto_id"] ?? 0);
+    header("Location: producto.php?id=" . $productoIdError . "&status=error");
+    exit;
 }
 
 $productoId = (int) ($_POST["producto_id"] ?? 0);

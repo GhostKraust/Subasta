@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . "/lib/security.php";
+start_secure_session();
 
 if (empty($_SESSION["admin_id"])) {
     header("Location: login.php");

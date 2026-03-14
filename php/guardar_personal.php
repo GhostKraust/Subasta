@@ -3,6 +3,16 @@ require_once __DIR__ . "/auth.php";
 require_admin();
 require_once __DIR__ . "/../config/db.php";
 
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    exit("Metodo no permitido.");
+}
+
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    header("Location: panel.php?staff=error");
+    exit;
+}
+
 $hasRole = false;
 $checkRole = $mysqli->query("SHOW COLUMNS FROM admin LIKE 'rol'");
 if ($checkRole && $checkRole->num_rows > 0) {

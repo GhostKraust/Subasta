@@ -67,6 +67,7 @@ $error = trim($_GET["error"] ?? "");
                 <p class="lead">Actualiza el usuario o cambia la contrasena.</p>
             <?php } ?>
             <form class="auth-form" action="actualizar_personal.php" method="post">
+                <?php echo csrf_input(); ?>
                 <input type="hidden" name="id" value="<?php echo (int) $admin["id"]; ?>" />
                 <label class="field">
                     <span>Usuario</span>

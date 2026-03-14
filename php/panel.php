@@ -270,6 +270,7 @@ if ($resultPujas) {
                 <h2 class="section-title">Personal administrativo</h2>
                 <p class="lead">Agrega, edita o elimina usuarios con acceso al panel.</p>
                 <form class="auth-form" action="guardar_personal.php" method="post">
+                    <?php echo csrf_input(); ?>
                     <label class="field">
                         <span>Usuario</span>
                         <input name="usuario" type="text" required placeholder="Ej. admin2" />
@@ -310,6 +311,7 @@ if ($resultPujas) {
                                             <div class="action-row">
                                                 <a class="btn btn-small btn-outline" href="editar_personal.php?id=<?php echo (int) $admin["id"]; ?>">Editar</a>
                                                 <form action="eliminar_personal.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar este usuario?');">
+                                                    <?php echo csrf_input(); ?>
                                                     <input type="hidden" name="id" value="<?php echo (int) $admin["id"]; ?>" />
                                                     <button class="btn btn-small" type="submit" <?php echo ((int) $admin["id"]) === $currentAdminId ? "disabled" : ""; ?>>Eliminar</button>
                                                 </form>
@@ -330,6 +332,7 @@ if ($resultPujas) {
         <section class="auth-card admin-presencial">
             <h2 class="section-title">Registrar puja presencial</h2>
             <form class="auth-form" action="puja_presencial.php" method="post">
+                <?php echo csrf_input(); ?>
                 <input type="hidden" name="moneda" value="<?php echo htmlspecialchars($moneda); ?>" />
                 <label class="field">
                     <span>Buscar producto</span>
@@ -442,6 +445,7 @@ if ($resultPujas) {
                                     </td>
                                     <td>
                                         <form action="eliminar_puja.php" method="post" onsubmit="return confirm('Seguro que quieres eliminar esta puja?');">
+                                            <?php echo csrf_input(); ?>
                                             <input type="hidden" name="id" value="<?php echo (int) ($puja["id"] ?? 0); ?>" />
                                             <input type="hidden" name="moneda" value="<?php echo htmlspecialchars($moneda); ?>" />
                                             <button class="btn btn-small" type="submit">Eliminar</button>

@@ -1,10 +1,11 @@
 <?php
+require_once __DIR__ . "/lib/security.php";
 require_once __DIR__ . "/../config/db.php";
 
 $maxIntentos = 5;
 $ventanaMin = 15;
 $bloqueoHoras = 2;
-session_start();
+start_secure_session();
 
 $error = "";
 $hasRole = false;
@@ -14,6 +15,9 @@ if ($checkRole && $checkRole->num_rows > 0) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+        $error = "Solicitud invalida. Recarga la pagina e intenta de nuevo.";
+    } else {
     $usuario = trim($_POST["usuario"] ?? "");
     $contrasena = $_POST["contrasena"] ?? "";
     $ip = $_SERVER["REMOTE_ADDR"] ?? "";
@@ -71,7 +75,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stored = $admin["password"] ?? "";
             $isValid = false;
             if ($stored !== "") {
-                $isValid = password_verify($contrasena, $stored) || $contrasena === $stored;
+                $algo = password_get_info($stored)["algo"] ?? null;
+                $isHash = $algo !== 0 && $algo !== null;
+                if ($isHash) {
+                    $isValid = password_verify($contrasena, $stored);
+                } else {
+                    $isValid = hash_equals($stored, $contrasena);
+                    if ($isValid) {
+                        $migratedHash = password_hash($contrasena, PASSWORD_DEFAULT);
+                        $stmtMigrate = $mysqli->prepare("UPDATE admin SET password = ? WHERE id = ? LIMIT 1");
+                        if ($stmtMigrate) {
+                            $adminId = (int) ($admin["id"] ?? 0);
+                            $stmtMigrate->bind_param("si", $migratedHash, $adminId);
+                            $stmtMigrate->execute();
+                            $stmtMigrate->close();
+                        }
+                    }
+                }
             }
 
             if ($admin && $isValid) {
@@ -92,6 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION["admin_id"] = $admin["id"];
                 $_SESSION["admin_user"] = $usuario;
                 $_SESSION["admin_role"] = $role;
+                session_regenerate_id(true);
                 $target = $role === "admin" ? "dashboard.php" : "panel.php";
                 header("Location: " . $target);
                 exit;
@@ -119,6 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         $error = "Credenciales invalidas.";
+    }
     }
 }
 
@@ -168,6 +190,7 @@ if ($resultCerradas) {
             <h1>Iniciar sesion</h1>
             <p class="lead">Acceso solo para personal autorizado. Administra productos y subastas desde aqui.</p>
             <form class="auth-form" action="login.php" method="post">
+                <?php echo csrf_input(); ?>
                 <label class="field">
                     <span>Usuario</span>
                     <input name="usuario" type="text" required autocomplete="username" placeholder="admin" />

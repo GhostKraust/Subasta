@@ -1,10 +1,13 @@
 <?php
-$DB_HOST = "localhost";
-$DB_USER = "root";
-$DB_PASS = "";
-$DB_NAME = "subasta";
+require_once __DIR__ . "/../php/lib/security.php";
+send_security_headers();
 
-$APP_TZ = "America/Mexico_City";
+$DB_HOST = getenv("SUBASTA_DB_HOST") ?: "localhost";
+$DB_USER = getenv("SUBASTA_DB_USER") ?: "root";
+$DB_PASS = getenv("SUBASTA_DB_PASS") ?: "";
+$DB_NAME = getenv("SUBASTA_DB_NAME") ?: "subasta";
+
+$APP_TZ = getenv("SUBASTA_APP_TZ") ?: "America/Mexico_City";
 date_default_timezone_set($APP_TZ);
 
 $mysqli = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);

@@ -9,6 +9,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit("Metodo no permitido.");
 }
 
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    http_response_code(419);
+    exit("Solicitud invalida.");
+}
+
 $id = (int) ($_POST["id"] ?? 0);
 $nombre = trim($_POST["nombre"] ?? "");
 $descripcion = trim($_POST["descripcion"] ?? "");

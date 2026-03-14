@@ -9,6 +9,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit("Metodo no permitido.");
 }
 
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    header("Location: productos.php?estado=error");
+    exit;
+}
+
 $id = (int) ($_POST["id"] ?? 0);
 $nuevoEstado = trim($_POST["estado"] ?? "");
 $inicioRaw = trim($_POST["fecha_inicio"] ?? "");

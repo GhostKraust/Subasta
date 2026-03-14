@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/auth.php";
+require_admin();
 require_once __DIR__ . "/../config/db.php";
 
 $categorias = [];
@@ -403,6 +404,7 @@ if (!empty($_GET["ok"])) {
             <h1>Nuevo producto</h1>
             <p class="lead">Completa los datos para publicar una nueva subasta.</p>
             <form class="auth-form" action="guardar_producto.php" method="post" enctype="multipart/form-data">
+                <?php echo csrf_input(); ?>
                 <label class="field">
                     <span>Nombre del producto</span>
                     <input name="nombre" type="text" required placeholder="Ej. Paquete de viaje" />
@@ -594,12 +596,14 @@ if (!empty($_GET["ok"])) {
                                                 <?php } ?>
                                                 <?php if (($producto["estado"] ?? "") === "activo") { ?>
                                                     <form action="cambiar_estado_producto.php" method="post" onsubmit="return confirm('Quieres pausar este producto?');">
+                                                        <?php echo csrf_input(); ?>
                                                         <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
                                                         <input type="hidden" name="estado" value="pausado" />
                                                         <button class="btn btn-small btn-outline" type="submit">Pausar</button>
                                                     </form>
                                                 <?php } elseif (($producto["estado"] ?? "") === "pausado") { ?>
                                                     <form action="cambiar_estado_producto.php" method="post" onsubmit="return confirm('Quieres reanudar este producto?');">
+                                                        <?php echo csrf_input(); ?>
                                                         <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
                                                         <input type="hidden" name="estado" value="activo" />
                                                         <button class="btn btn-small btn-outline" type="submit">Reanudar</button>
@@ -607,6 +611,7 @@ if (!empty($_GET["ok"])) {
                                                 <?php } ?>
                                                 <a class="btn btn-small btn-outline" href="editar_producto.php?id=<?php echo (int) $producto["id"]; ?>">Editar</a>
                                                 <form action="retirar_producto.php" method="post" onsubmit="return confirm('Quieres retirar este producto de la subasta?');">
+                                                    <?php echo csrf_input(); ?>
                                                     <input type="hidden" name="id" value="<?php echo (int) $producto["id"]; ?>" />
                                                     <button class="btn btn-small" type="submit">Retirar</button>
                                                 </form>
@@ -654,6 +659,7 @@ if (!empty($_GET["ok"])) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <form id="reactivarForm" action="cambiar_estado_producto.php" method="post">
+                        <?php echo csrf_input(); ?>
                         <input type="hidden" name="id" id="reactivarId" value="" />
                         <input type="hidden" name="estado" value="activo" />
                         <button type="submit" class="btn">Reactivar</button>

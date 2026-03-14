@@ -7,6 +7,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit("Metodo no permitido.");
 }
 
+if (!verify_csrf_token($_POST["csrf_token"] ?? "")) {
+    header("Location: panel.php");
+    exit;
+}
+
 $productoId = (int) ($_POST["producto_id"] ?? 0);
 $montoMoneda = (float) ($_POST["monto_puja"] ?? 0);
 $moneda = strtoupper($_POST["moneda"] ?? "MXN");
